@@ -542,10 +542,6 @@ func (p *Parser) curPrecedence() int {
 	return LOWEST
 }
 
-func (p *Parser) addError(msg string) {
-	p.errors = append(p.errors, msg)
-}
-
 func (p *Parser) parseLoopStatement() Statement {
 	stmt := &LoopStatement{Token: p.curToken}
 
