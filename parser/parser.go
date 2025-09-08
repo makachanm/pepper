@@ -142,6 +142,8 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseReturnStatement()
 	case lexer.REPEAT:
 		return p.parseRepeatStatement()
+	case lexer.LOOP:
+		return p.parseLoopStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -542,4 +544,27 @@ func (p *Parser) curPrecedence() int {
 
 func (p *Parser) addError(msg string) {
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) parseLoopStatement() Statement {
+	stmt := &LoopStatement{Token: p.curToken}
+
+	if !p.expectPeek(lexer.LBRACKET) {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(lexer.RBRACKET) {
+		return nil
+	}
+
+	if !p.expectPeek(lexer.THEN) {
+		return nil
+	}
+
+	stmt.Body = p.parseBlockStatement()
+
+	return stmt
 }

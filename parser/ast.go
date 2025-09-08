@@ -198,3 +198,12 @@ type RepeatStatement struct {
 
 func (rs *RepeatStatement) statementNode()       {}
 func (rs *RepeatStatement) TokenLiteral() string { return rs.Token.Literal }
+
+type LoopStatement struct {
+	Token     lexer.Token // The 'loop' token
+	Condition Expression
+	Body      *BlockStatement
+}
+
+func (ls *LoopStatement) statementNode()       {}
+func (ls *LoopStatement) TokenLiteral() string { return ls.Token.Literal }
