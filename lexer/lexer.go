@@ -23,7 +23,12 @@ func (l *Lexer) readChar() {
 	}
 	l.position = l.readPosition
 	l.readPosition++
-	l.col++
+	if l.ch == '\n' {
+		l.line++
+		l.col = 1
+	} else {
+		l.col++
+	}
 }
 
 func (l *Lexer) NextToken() Token {
@@ -31,97 +36,60 @@ func (l *Lexer) NextToken() Token {
 
 	l.skipWhitespace()
 
-	switch l.ch {
-	case '=':
-		if l.peekChar() == '=' {
-			ch := l.ch
-			l.readChar()
-			literal := string(ch) + string(l.ch)
-			tok = Token{Type: EQ, Literal: literal}
-		} else {
-			tok = newToken(ASSIGN, l.ch)
-		}
-	case '+' :
-		tok = newToken(PLUS, l.ch)
-	case '-':
-		if l.peekChar() == '>' {
-			ch := l.ch
-			l.readChar()
-			literal := string(ch) + string(l.ch)
-			tok = Token{Type: ARROW, Literal: literal}
-		} else {
-			tok = newToken(MINUS, l.ch)
-		}
-	case '*':
-		tok = newToken(ASTERISK, l.ch)
-	case '/':
-		tok = newToken(SLASH, l.ch)
-	case '%':
-		tok = newToken(PERCENT, l.ch)
-	case '<':
-		if l.peekChar() == '=' {
-			ch := l.ch
-			l.readChar()
-			literal := string(ch) + string(l.ch)
-			tok = Token{Type: LTE, Literal: literal}
-		} else {
-			tok = newToken(LT, l.ch)
-		}
-	case '>':
-		if l.peekChar() == '=' {
-			ch := l.ch
-			l.readChar()
-			literal := string(ch) + string(l.ch)
-			tok = Token{Type: GTE, Literal: literal}
-		} else {
-			tok = newToken(GT, l.ch)
-		}
-	case '!':
-		if l.peekChar() == '=' {
-			ch := l.ch
-			l.readChar()
-			literal := string(ch) + string(l.ch)
-			tok = Token{Type: NOT_EQ, Literal: literal}
-		} else {
-			tok = newToken(ILLEGAL, l.ch)
-		}
-	case '`':
+	startLine := l.line
+	startCol := l.col
+
+	if l.ch == '`' {
+		l.readChar() // skip the backtick
 		tok.Type = STRING
 		tok.Literal = l.readString()
-	case '[':
-		tok = newToken(LBRACKET, l.ch)
-	case ']':
-		tok = newToken(RBRACKET, l.ch)
-	case '(': 
-		tok = newToken(LPAREN, l.ch)
-	case ')':
-		tok = newToken(RPAREN, l.ch)
-	case ',':
-		tok = newToken(COMMA, l.ch)
-	case ':':
-		tok = newToken(COLON, l.ch)
-	case '\n':
-		tok = newToken(NEWLINE, l.ch)
-		l.line++
-		l.col = 1
-	case 0:
-		tok.Literal = ""
-		tok.Type = EOF
-	default:
-		if isLetter(l.ch) {
-			tok.Literal = l.readIdentifier()
-			tok.Type = LookupIdent(tok.Literal)
-			return tok
-		} else if isDigit(l.ch) {
-			tok.Literal = l.readNumber()
-			if isInt(tok.Literal) {
-				tok.Type = INT
-			} else {
-				tok.Type = REAL
+		tok.Line = startLine
+		tok.Column = startCol
+		l.readChar() // skip the closing backtick
+		return tok
+	}
+
+	if tokType, ok := matchingTokens[string(l.ch)]; ok {
+		literal := string(l.ch)
+		peek := l.peekChar()
+		switch tokType {
+		case ASSIGN:
+			if peek == '=' {
+				l.readChar()
+				literal = "=="
+				tokType = EQ
 			}
-			return tok
+		case LT:
+			if peek == '=' {
+				l.readChar()
+				literal = "<="
+				tokType = LTE
+			}
+		case GT:
+			if peek == '=' {
+				l.readChar()
+				literal = ">="
+				tokType = GTE
+			}
+		}
+		tok = Token{Type: tokType, Literal: literal, Line: startLine, Column: startCol}
+	} else {
+		if isLetter(l.ch) {
+			literal := l.readIdentifier()
+			// return here because readIdentifier advances the cursor
+			return Token{Type: LookupIdent(literal), Literal: literal, Line: startLine, Column: startCol}
+		} else if isDigit(l.ch) {
+			literal := l.readNumber()
+			tokType := INT
+			if !isInt(literal) {
+				tokType = REAL
+			}
+			// return here because readNumber advances the cursor
+			return Token{Type: tokType, Literal: literal, Line: startLine, Column: startCol}
+		} else if l.ch == 0 {
+			tok = Token{Type: EOF, Literal: "", Line: startLine, Column: startCol}
 		} else {
-			tok = newToken(ILLEGAL, l.ch)
+			tok = Token{Type: ILLEGAL, Literal: string(l.ch), Line: startLine, Column: startCol}
 		}
 	}
 
@@ -130,8 +98,26 @@ func (l *Lexer) NextToken() Token {
 }
 
 func (l *Lexer) skipWhitespace() {
-	for l.ch == ' ' || l.ch == '\t' || l.ch == '\r' {
-		l.readChar()
+	for {
+		if l.ch == ' ' || l.ch == '\t' || l.ch == '\n' {
+			l.readChar()
+		} else if l.ch == '/' && l.peekChar() == '*' {
+			l.readChar() // consume "/"
+			l.readChar() // consume "*",
+			for {
+				if l.ch == 0 { // EOF
+					return
+				}
+				if l.ch == '*' && l.peekChar() == '/' {
+					l.readChar() // consume "*",
+					l.readChar() // consume "/"
+					break
+				}
+				l.readChar()
+			}
+		} else {
+			break
+		}
 	}
 }
 
@@ -152,7 +138,7 @@ func (l *Lexer) readNumber() string {
 }
 
 func (l *Lexer) readString() string {
-	position := l.position + 1
+	position := l.position
 	for {
 		l.readChar()
 		if l.ch == '`' || l.ch == 0 {
@@ -167,10 +153,6 @@ func (l *Lexer) peekChar() byte {
 		return 0
 	}
 	return l.input[l.readPosition]
-}
-
-func newToken(tokenType TokenType, ch byte) Token {
-	return Token{Type: tokenType, Literal: string(ch)}
 }
 
 func isLetter(ch byte) bool {

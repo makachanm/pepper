@@ -47,6 +47,7 @@ func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 type DimStatement struct {
 	Token lexer.Token // the lexer.DIM token
 	Name  *Identifier
+	AssignToken lexer.Token // the = token
 	Value Expression
 }
 
@@ -183,7 +184,7 @@ func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
 
 type AssignmentExpression struct {
 	Token lexer.Token // The '=' token
-	Name  *Identifier
+	Left  Expression
 	Value Expression
 }
 
@@ -207,3 +208,43 @@ type LoopStatement struct {
 
 func (ls *LoopStatement) statementNode()       {}
 func (ls *LoopStatement) TokenLiteral() string { return ls.Token.Literal }
+
+type BreakStatement struct {
+	Token lexer.Token // The 'break' token
+}
+
+func (bs *BreakStatement) statementNode()       {}
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+
+type ContinueStatement struct {
+	Token lexer.Token // The 'continue' token
+}
+
+func (cs *ContinueStatement) statementNode()       {}
+func (cs *ContinueStatement) TokenLiteral() string { return cs.Token.Literal }
+
+type PackLiteral struct {
+	Token lexer.Token // the '[' token
+	Pairs map[Expression]Expression
+}
+
+func (pl *PackLiteral) expressionNode()      {}
+func (pl *PackLiteral) TokenLiteral() string { return pl.Token.Literal }
+
+type IndexExpression struct {
+	Token lexer.Token // the [ token
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode()      {}
+func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
+
+type MemberAccessExpression struct {
+	Token  lexer.Token // The '->' token
+	Object Expression
+	Member *Identifier
+}
+
+func (mae *MemberAccessExpression) expressionNode()      {}
+func (mae *MemberAccessExpression) TokenLiteral() string { return mae.Token.Literal }

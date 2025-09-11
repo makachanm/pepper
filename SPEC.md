@@ -11,23 +11,20 @@ func [foo] ... end (function)
 nil                (nil)
 ```
 
+### COMMENT
+`/* */`로 감싸진 모든 코드는 무시된다.
+
 ### PACK
 Pack은 일종의 Key-Value 맵과 같다. 모든 값은 키를 가지고 있다.
 int, real, str만 키로써 사용될 수 있으며, 키는 중복될수 없고 모두 unique해야 한다. 
 
+value는 오직 int, real, str, bool, pack만 허용되며, function과 nil은 허용되지 않는다.
 ```
 example: simple number array in pack
 [ 1: 5, 2: 7, 3: 9, 4: 11 ]
 
 exampe: simple string K-V map in pack
 [ `foo`: `bar`, `fizz`, `buzz` ]
-```
-
-만일 키에 대한 값이 function일 경우, 특수한 문법으로 접근할 수 있다.
-```
-example [ `foo`: func[] ]
-
-example->foo[]
 ```
 
 ### EXPRESSIONS
@@ -142,17 +139,17 @@ func foo [fizz buzz] then
 end
 ```
 
-Pack에서 키를 가지는 값으로써 함수를 정의할 때엔 특수한 문법을 사용할 수 있다.
-
-```
-func example->foo [fizz buzz] then
-    return fizz + buzz
-end
-```
-
 ### VARIABLES
 변수는 값을 저장하는 저장소이다. 변수는 위와 같은 타입을 지닐 수 있으며, 무조건 첫 선언 시에 초기값을 지정해 줘야 한다. 하나의 스코프 내에서 선언된 변수는 해당 스코프 외부에서 접근할 수 없다.
 ```
 dim foo = `hello world!"
 dim number = 42
+dim examplepack = [ `foo`: `bar`, `fizz`, `buzz` ]
 ```
+
+Pack의 특정한 Key에 접근할 때엔 특수한 문법을 사용한다.
+```
+dim examplepack = [ `foo`: `bar`, `fizz`, `buzz` ]
+examplepack|`foo`|
+```
+이때, 특수 문법으로 접근한 Key는 일종의 독립적인 Variable로 취급된다.

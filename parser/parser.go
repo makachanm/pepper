@@ -21,6 +21,7 @@ const (
 	PRODUCT     // *
 	PREFIX      // -X or !X
 	CALL        // myFunction(X)
+	INDEX       // array[index]
 )
 
 var precedences = map[lexer.TokenType]int{
@@ -39,6 +40,8 @@ var precedences = map[lexer.TokenType]int{
 	lexer.ASTERISK: PRODUCT,
 	lexer.PERCENT:  PRODUCT,
 	lexer.LBRACKET: CALL,
+	lexer.PIPE:     INDEX,
+	lexer.ARROW:    INDEX,
 }
 
 type (
@@ -72,6 +75,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(lexer.FALSE, p.parseBoolean)
 	p.registerPrefix(lexer.NIL, p.parseNil)
 	p.registerPrefix(lexer.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(lexer.LBRACKET, p.parsePackLiteral)
 	p.registerPrefix(lexer.IF, p.parseIfExpression)
 	p.registerPrefix(lexer.ELIF, p.parseIfExpression)
 	p.registerPrefix(lexer.MINUS, p.parsePrefixExpression)
@@ -93,7 +97,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(lexer.AND, p.parseInfixExpression)
 	p.registerInfix(lexer.OR, p.parseInfixExpression)
 	p.registerInfix(lexer.LBRACKET, p.parseCallExpression)
+	p.registerInfix(lexer.PIPE, p.parseIndexExpression)
 	p.registerInfix(lexer.ASSIGN, p.parseAssignmentExpression)
+	p.registerInfix(lexer.ARROW, p.parseMemberAccessExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -144,9 +150,21 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseRepeatStatement()
 	case lexer.LOOP:
 		return p.parseLoopStatement()
+	case lexer.BREAK:
+		return p.parseBreakStatement()
+	case lexer.CONTINUE:
+		return p.parseContinueStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
+}
+
+func (p *Parser) parseBreakStatement() *BreakStatement {
+	return &BreakStatement{Token: p.curToken}
+}
+
+func (p *Parser) parseContinueStatement() *ContinueStatement {
+	return &ContinueStatement{Token: p.curToken}
 }
 
 func (p *Parser) parseLetStatement() *LetStatement {
@@ -185,6 +203,7 @@ func (p *Parser) parseDimStatement() *DimStatement {
 	if !p.expectPeek(lexer.ASSIGN) {
 		return nil
 	}
+	stmt.AssignToken = p.curToken
 
 	p.nextToken()
 
@@ -403,49 +422,91 @@ func (p *Parser) parseFunctionParameters() []*Identifier {
 		return identifiers
 	}
 
-	p.nextToken()
+	p.nextToken() // consume '['
 
-	ident := &Identifier{Token: p.curToken, Value: p.curToken.Literal}
-	identifiers = append(identifiers, ident)
-
-	for p.peekTokenIs(lexer.COMMA) {
-		p.nextToken()
-		p.nextToken()
+	for p.curTokenIs(lexer.IDENT) {
 		ident := &Identifier{Token: p.curToken, Value: p.curToken.Literal}
 		identifiers = append(identifiers, ident)
+		p.nextToken()
 	}
 
-	if !p.expectPeek(lexer.RBRACKET) {
+	if !p.curTokenIs(lexer.RBRACKET) {
+		p.peekError(lexer.RBRACKET)
 		return nil
 	}
 
 	return identifiers
 }
 
-func (p *Parser) parseCallExpression(function Expression) Expression {
-	exp := &CallExpression{Token: p.curToken, Function: function}
-	exp.Arguments = p.parseExpressionList(lexer.RBRACKET)
-	return exp
+func (p *Parser) parseCallOrIndexExpression(left Expression) Expression {
+	tok := p.curToken
+	args := p.parseExpressionList(lexer.RBRACKET)
+	if len(args) == 1 {
+		return &IndexExpression{Token: tok, Left: left, Index: args[0]}
+	}
+	return &CallExpression{Token: tok, Function: left, Arguments: args}
 }
 
-func (p *Parser) parseAssignmentExpression(name Expression) Expression {
-	stmt := &AssignmentExpression{Token: p.curToken}
-	if n, ok := name.(*Identifier); ok {
-		stmt.Name = n
-	} else {
-		msg := fmt.Sprintf("expected assign token to be IDENT, got %s instead", name.TokenLiteral())
+func (p *Parser) parsePackLiteral() Expression {
+	pack := &PackLiteral{Token: p.curToken}
+	pack.Pairs = make(map[Expression]Expression)
+
+	if p.peekTokenIs(lexer.RBRACKET) {
+		p.nextToken()
+		return pack
+	}
+
+	p.nextToken()
+
+	key := p.parseExpression(LOWEST)
+	if !p.expectPeek(lexer.COLON) {
+		return nil
+	}
+	p.nextToken()
+	value := p.parseExpression(LOWEST)
+	pack.Pairs[key] = value
+
+	for p.peekTokenIs(lexer.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		key = p.parseExpression(LOWEST)
+		if !p.expectPeek(lexer.COLON) {
+			return nil
+		}
+		p.nextToken()
+		value = p.parseExpression(LOWEST)
+		pack.Pairs[key] = value
+	}
+
+	if !p.expectPeek(lexer.RBRACKET) {
+		return nil
+	}
+
+	return pack
+}
+
+func (p *Parser) parseAssignmentExpression(left Expression) Expression {
+	switch left.(type) {
+	case *Identifier, *IndexExpression:
+	default:
+		msg := fmt.Sprintf("invalid assignment target %s", left.TokenLiteral())
 		p.errors = append(p.errors, msg)
+		return left
+	}
+	expression := &AssignmentExpression{
+		Token: p.curToken, // The '=' token
+		Left:  left,
 	}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
-	stmt.Value = p.parseExpression(precedence)
+	expression.Value = p.parseExpression(precedence)
 
-	return stmt
+	return expression
 }
 
 func (p *Parser) parseExpressionList(end lexer.TokenType) []Expression {
-	list := []Expression{}
+	var list []Expression
 
 	if p.peekTokenIs(end) {
 		p.nextToken()
@@ -455,8 +516,7 @@ func (p *Parser) parseExpressionList(end lexer.TokenType) []Expression {
 	p.nextToken()
 	list = append(list, p.parseExpression(LOWEST))
 
-	for p.peekTokenIs(lexer.COMMA) {
-		p.nextToken()
+	for !p.peekTokenIs(end) {
 		p.nextToken()
 		list = append(list, p.parseExpression(LOWEST))
 	}
@@ -563,4 +623,38 @@ func (p *Parser) parseLoopStatement() Statement {
 	stmt.Body = p.parseBlockStatement()
 
 	return stmt
+}
+
+func (p *Parser) parseIndexExpression(left Expression) Expression {
+	exp := &IndexExpression{Token: p.curToken, Left: left}
+
+	p.nextToken()
+	exp.Index = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(lexer.PIPE) {
+		return nil
+	}
+
+	return exp
+}
+
+func (p *Parser) parseCallExpression(function Expression) Expression {
+	exp := &CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseExpressionList(lexer.RBRACKET)
+	return exp
+}
+
+func (p *Parser) parseMemberAccessExpression(left Expression) Expression {
+	exp := &MemberAccessExpression{
+		Token:  p.curToken,
+		Object: left,
+	}
+
+	if !p.expectPeek(lexer.IDENT) {
+		return nil
+	}
+
+	exp.Member = &Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	return exp
 }

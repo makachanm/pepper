@@ -45,6 +45,7 @@ const (
 	COMMA    TokenType = ","
 	COLON    TokenType = ":"
 	ARROW    TokenType = "->"
+	PIPE     TokenType = "|"
 
 	// Keywords
 	FUNCTION TokenType = "FUNCTION"
@@ -91,6 +92,27 @@ var keywords = map[string]TokenType{
 	"or":       OR,
 	"not":      NOT,
 	"nil":      NIL,
+}
+
+var matchingTokens = map[string]TokenType{
+	"=":  ASSIGN,
+	"+":  PLUS,
+	"-":  MINUS,
+	"*":  ASTERISK,
+	"/":  SLASH,
+	"%":  PERCENT,
+	"<":  LT,
+	">":  GT,
+	"(":  LPAREN,
+	")":  RPAREN,
+	"[":  LBRACKET,
+	"]":  RBRACKET,
+	"{":  LBRACE,
+	"}":  RBRACE,
+	",":  COMMA,
+	":":  COLON,
+	"|":  PIPE,
+	"\n": NEWLINE,
 }
 
 func LookupIdent(ident string) TokenType {
