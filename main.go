@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"pepper/compiler"
 	"pepper/lexer"
 	"pepper/parser"
-	"github.com/davecgh/go-spew/spew"
+	"pepper/runtime"
 )
 
 func main() {
@@ -24,6 +25,14 @@ func main() {
 	p := parser.New(l)
 
 	program := p.ParseProgram()
+	comp := compiler.NewCompiler().Compile(program)
 
-	spew.Dump(program)
+	for i, instr := range comp {
+		fmt.Printf("%04d: %s\n", i, runtime.ResolveVMInstruction(instr))
+	}
+
+	vm := runtime.NewVM(comp)
+	vm.Run()
+	runtime.DumpOperandStack(vm)
+	runtime.DumpMemory(vm)
 }

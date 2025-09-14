@@ -49,7 +49,6 @@ const (
 
 	// Keywords
 	FUNCTION TokenType = "FUNCTION"
-	LET      TokenType = "LET"
 	DIM      TokenType = "DIM"
 	TRUE     TokenType = "TRUE"
 	FALSE    TokenType = "FALSE"
@@ -74,7 +73,6 @@ type Token struct {
 
 var keywords = map[string]TokenType{
 	"func":     FUNCTION,
-	"let":      LET,
 	"dim":      DIM,
 	"true":     TRUE,
 	"false":    FALSE,

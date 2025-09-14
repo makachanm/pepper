@@ -83,4 +83,4 @@ dim final_results = [
     `loop_counter`: counter
 ]
 
-final_results
+print[product_result]

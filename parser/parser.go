@@ -99,7 +99,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(lexer.LBRACKET, p.parseCallExpression)
 	p.registerInfix(lexer.PIPE, p.parseIndexExpression)
 	p.registerInfix(lexer.ASSIGN, p.parseAssignmentExpression)
-	p.registerInfix(lexer.ARROW, p.parseMemberAccessExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -140,8 +139,6 @@ func (p *Parser) ParseProgram() *Program {
 
 func (p *Parser) parseStatement() Statement {
 	switch p.curToken.Type {
-	case lexer.LET:
-		return p.parseLetStatement()
 	case lexer.DIM:
 		return p.parseDimStatement()
 	case lexer.RETURN:
@@ -167,30 +164,6 @@ func (p *Parser) parseContinueStatement() *ContinueStatement {
 	return &ContinueStatement{Token: p.curToken}
 }
 
-func (p *Parser) parseLetStatement() *LetStatement {
-	stmt := &LetStatement{Token: p.curToken}
-
-	if !p.expectPeek(lexer.IDENT) {
-		return nil
-	}
-
-	stmt.Name = &Identifier{Token: p.curToken, Value: p.curToken.Literal}
-
-	if !p.expectPeek(lexer.ASSIGN) {
-		return nil
-	}
-
-	p.nextToken()
-
-	stmt.Value = p.parseExpression(LOWEST)
-
-	if p.peekTokenIs(lexer.NEWLINE) {
-		p.nextToken()
-	}
-
-	return stmt
-}
-
 func (p *Parser) parseDimStatement() *DimStatement {
 	stmt := &DimStatement{Token: p.curToken}
 
@@ -200,14 +173,12 @@ func (p *Parser) parseDimStatement() *DimStatement {
 
 	stmt.Name = &Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
-	if !p.expectPeek(lexer.ASSIGN) {
-		return nil
+	if p.peekTokenIs(lexer.ASSIGN) {
+		p.nextToken()
+		stmt.AssignToken = p.curToken
+		p.nextToken()
+		stmt.Value = p.parseExpression(LOWEST)
 	}
-	stmt.AssignToken = p.curToken
-
-	p.nextToken()
-
-	stmt.Value = p.parseExpression(LOWEST)
 
 	if p.peekTokenIs(lexer.NEWLINE) {
 		p.nextToken()
@@ -231,9 +202,18 @@ func (p *Parser) parseReturnStatement() *ReturnStatement {
 }
 
 func (p *Parser) parseExpressionStatement() *ExpressionStatement {
+	// This is a special case. If we have a NEWLINE, we just want to
+	// consume it and return nil, which will prevent it from being added
+	// to the list of statements.
+	if p.curTokenIs(lexer.NEWLINE) {
+		return nil
+	}
 	stmt := &ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(LOWEST)
+	if stmt.Expression == nil {
+		return nil
+	}
 
 	if p.peekTokenIs(lexer.NEWLINE) {
 		p.nextToken()
@@ -438,15 +418,6 @@ func (p *Parser) parseFunctionParameters() []*Identifier {
 	return identifiers
 }
 
-func (p *Parser) parseCallOrIndexExpression(left Expression) Expression {
-	tok := p.curToken
-	args := p.parseExpressionList(lexer.RBRACKET)
-	if len(args) == 1 {
-		return &IndexExpression{Token: tok, Left: left, Index: args[0]}
-	}
-	return &CallExpression{Token: tok, Function: left, Arguments: args}
-}
-
 func (p *Parser) parsePackLiteral() Expression {
 	pack := &PackLiteral{Token: p.curToken}
 	pack.Pairs = make(map[Expression]Expression)
@@ -641,20 +612,5 @@ func (p *Parser) parseIndexExpression(left Expression) Expression {
 func (p *Parser) parseCallExpression(function Expression) Expression {
 	exp := &CallExpression{Token: p.curToken, Function: function}
 	exp.Arguments = p.parseExpressionList(lexer.RBRACKET)
-	return exp
-}
-
-func (p *Parser) parseMemberAccessExpression(left Expression) Expression {
-	exp := &MemberAccessExpression{
-		Token:  p.curToken,
-		Object: left,
-	}
-
-	if !p.expectPeek(lexer.IDENT) {
-		return nil
-	}
-
-	exp.Member = &Identifier{Token: p.curToken, Value: p.curToken.Literal}
-
 	return exp
 }
