@@ -30,7 +30,7 @@ dim sum = a + b
 dim difference = b - a
 dim product = a * 2
 dim quotient = b / a
-dim remainder = 21 % a /* 21 % 10 = 1 */
+dim remainder = 21 % a 
 
 /* Comparison and Logical */
 dim are_equal = (a == c) and true
@@ -59,28 +59,19 @@ end
 /* counter will be 4 */
 
 /* --- Repeat Loop --- */
-repeat 2 then
-    dim dummy = 0
-end
+dim dummy = 10
+dim foo = 30
 
+repeat 2 then
+    dummy = dummy + 10
+end
 
 /* --- Function Definition & Calls --- */
 
-/* Standard function */
 func multiply[x y] then
     return x * y
 end
 
-dim product_result = multiply[a c] /* Call with space-separated arguments */
-
-
-/* --- Final Output --- */
-/* The final expression's value is implicitly returned by the script. */
-/* Let's create a final pack to hold interesting results. */
-dim final_results = [
-    `new_name`: new_name,
-    `product`: product_result,
-    `loop_counter`: counter
-]
+dim product_result = multiply[dummy foo] 
 
 print[product_result]

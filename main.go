@@ -27,12 +27,8 @@ func main() {
 	program := p.ParseProgram()
 	comp := compiler.NewCompiler().Compile(program)
 
-	for i, instr := range comp {
-		fmt.Printf("%04d: %s\n", i, runtime.ResolveVMInstruction(instr))
-	}
-
 	vm := runtime.NewVM(comp)
 	vm.Run()
-	runtime.DumpOperandStack(vm)
-	runtime.DumpMemory(vm)
+	//runtime.DumpOperandStack(vm)
+	//runtime.DumpMemory(vm)
 }
