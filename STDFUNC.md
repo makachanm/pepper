@@ -19,7 +19,7 @@ println["hello world"]
 screen_clear[]
 ```
 
-#### set_source_rgb
+#### set_color
 `set_source_rgb` 함수는 R, G, B 세 개의 정수 인자를 받아서 드로잉 색상을 설정한다. 각 값은 0과 255 사이여야 한다.
 ```
 set_source_rgb[255, 0, 0] /* Red */
