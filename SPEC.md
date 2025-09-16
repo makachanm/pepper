@@ -150,7 +150,6 @@ dim examplepack = [ `foo`: `bar`, `fizz`, `buzz` ]
 Pack의 특정한 Key에 접근할 때엔 특수한 문법을 사용한다.
 ```
 dim examplepack = [ `foo`: `bar`, `fizz`, `buzz` ]
-examplepack|`foo`| = `eggs`
 examplepack->fizz = `spam`
 ```
 이때, 특수 문법으로 접근한 Key는 일종의 독립적인 Variable로 취급된다.

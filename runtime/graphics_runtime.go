@@ -15,10 +15,10 @@ func GfxClear(stack *vm.OperandStack) {
 }
 
 func GfxSetSourceRGB(stack *vm.OperandStack) {
-	b := stack.Pop().FloatData
-	g := stack.Pop().FloatData
-	r := stack.Pop().FloatData
-	Gfx.SetSourceRGB(r, g, b)
+	b := stack.Pop().IntData
+	g := stack.Pop().IntData
+	r := stack.Pop().IntData
+	Gfx.SetSourceRGB(float64(r), float64(g), float64(b))
 }
 
 func GfxDrawRect(stack *vm.OperandStack) {
@@ -42,6 +42,45 @@ func GfxDrawLine(stack *vm.OperandStack) {
 	y1 := stack.Pop().IntData
 	x1 := stack.Pop().IntData
 	Gfx.DrawLine(int(x1), int(y1), int(x2), int(y2))
+}
+
+func GfxDrawTriangle(stack *vm.OperandStack) {
+	y3 := stack.Pop().IntData
+	x3 := stack.Pop().IntData
+	y2 := stack.Pop().IntData
+	x2 := stack.Pop().IntData
+	y1 := stack.Pop().IntData
+	x1 := stack.Pop().IntData
+	Gfx.DrawTriangle(int(x1), int(y1), int(x2), int(y2), int(x3), int(y3))
+}
+
+func GfxDrawBezier(stack *vm.OperandStack) {
+	y4 := stack.Pop().IntData
+	x4 := stack.Pop().IntData
+	y3 := stack.Pop().IntData
+	x3 := stack.Pop().IntData
+	y2 := stack.Pop().IntData
+	x2 := stack.Pop().IntData
+	y1 := stack.Pop().IntData
+	x1 := stack.Pop().IntData
+	Gfx.DrawBezier(int(x1), int(y1), int(x2), int(y2), int(x3), int(y3), int(x4), int(y4))
+}
+
+func GfxDrawText(stack *vm.OperandStack) {
+	text := stack.Pop().StringData
+	y := stack.Pop().IntData
+	x := stack.Pop().IntData
+	Gfx.DrawText(int(x), int(y), text)
+}
+
+func GfxSetFontFace(stack *vm.OperandStack) {
+	fontFace := stack.Pop().StringData
+	Gfx.SetFontFace(fontFace)
+}
+
+func GfxSetFontSize(stack *vm.OperandStack) {
+	size := stack.Pop().IntData
+	Gfx.SetFontSize(float64(size))
 }
 
 func GfxSaveToFile(stack *vm.OperandStack) {

@@ -297,10 +297,6 @@ const (
 	OpIndex
 	OpMakePack
 	OpSetIndex
-	OpSin
-	OpCos
-	OpTan
-	OpSqrt
 )
 
 type VMInstr struct {

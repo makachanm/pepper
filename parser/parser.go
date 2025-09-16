@@ -179,6 +179,9 @@ func (p *Parser) parseDimStatement() *DimStatement {
 		stmt.AssignToken = p.curToken
 		p.nextToken()
 		stmt.Value = p.parseExpression(LOWEST)
+		if stmt.Value == nil {
+			return nil
+		}
 	}
 
 	if p.peekTokenIs(lexer.NEWLINE) {

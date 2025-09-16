@@ -1,36 +1,58 @@
 package runtime
 
 import (
+	"encoding/json"
 	"pepper/vm"
 	"strings"
 )
 
-func doSyscallString(v VM, code int64) {
+func doSyscallString(vmInstance VM, code int64) {
 	switch code {
-	case 9: // str_len
-		str := v.OperandStack.Pop()
+	case 200: // str_len
+		str := vmInstance.OperandStack.Pop()
 		if str.Type == vm.STRING {
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(str.StringData))})
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(str.StringData))})
 		} else {
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.INTGER, IntData: 0})
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.INTGER, IntData: 0})
 		}
-	case 10: // str_sub
-		end := v.OperandStack.Pop()
-		start := v.OperandStack.Pop()
-		str := v.OperandStack.Pop()
+	case 201: // str_sub
+		end := vmInstance.OperandStack.Pop()
+		start := vmInstance.OperandStack.Pop()
+		str := vmInstance.OperandStack.Pop()
 		if str.Type == vm.STRING && start.Type == vm.INTGER && end.Type == vm.INTGER {
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: str.StringData[start.IntData:end.IntData]})
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: str.StringData[start.IntData:end.IntData]})
 		} else {
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: ""})
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: ""})
 		}
-	case 11: // str_replace
-		newStr := v.OperandStack.Pop()
-		oldStr := v.OperandStack.Pop()
-		str := v.OperandStack.Pop()
+	case 202: // str_replace
+		newStr := vmInstance.OperandStack.Pop()
+		oldStr := vmInstance.OperandStack.Pop()
+		str := vmInstance.OperandStack.Pop()
 		if str.Type == vm.STRING && oldStr.Type == vm.STRING && newStr.Type == vm.STRING {
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: strings.ReplaceAll(str.StringData, oldStr.StringData, newStr.StringData)})
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: strings.ReplaceAll(str.StringData, oldStr.StringData, newStr.StringData)})
 		} else {
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: ""})
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: ""})
 		}
+	case 203: // json_decode
+		jsonStr := vmInstance.OperandStack.Pop()
+		if jsonStr.Type != vm.STRING {
+			vmInstance.OperandStack.Push(vm.VMDataObject{}) // Push nil
+			return
+		}
+		var data interface{}
+		if err := json.Unmarshal([]byte(jsonStr.StringData), &data); err != nil {
+			vmInstance.OperandStack.Push(vm.VMDataObject{}) // Push nil
+			return
+		}
+		vmInstance.OperandStack.Push(convertInterfaceToVMObject(data))
+	case 204: // json_encode
+		obj := vmInstance.OperandStack.Pop()
+		iface := convertVMObjectToInterface(obj)
+		jsonBytes, err := json.Marshal(iface)
+		if err != nil {
+			vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: ""})
+			return
+		}
+		vmInstance.OperandStack.Push(vm.VMDataObject{Type: vm.STRING, StringData: string(jsonBytes)})
 	}
 }
