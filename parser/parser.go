@@ -472,7 +472,7 @@ func (p *Parser) parseAssignmentExpression(left Expression) Expression {
 
 	precedence := p.curPrecedence()
 	p.nextToken()
-	expression.Value = p.parseExpression(precedence)
+	expression.Value = p.parseExpression(precedence - 1)
 
 	return expression
 }

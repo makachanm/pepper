@@ -14,6 +14,7 @@ type VM struct {
 
 func NewVM(input []vm.VMInstr) *VM {
 	mem := vm.NewVMMEMObjTable()
+	GfxNew(640, 480) // Initialize graphics context
 	return &VM{
 		CallStack:    vm.NewCallStack(),
 		OperandStack: vm.NewOperandStack(),
@@ -67,7 +68,7 @@ func (v *VM) Run() {
 			}
 			v.PC = v.CallStack.Pop()
 		case vm.OpSyscall:
-			doSyscall(v, instr.Oprand1.IntData)
+			doSyscall(*v, instr.Oprand1.IntData)
 		case vm.OpAdd:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
@@ -130,11 +131,11 @@ func (v *VM) Run() {
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }))
 		case vm.OpJmp:
-			v.PC = int(instr.Oprand1.IntData)
+			v.PC = int(instr.Oprand1.IntData) - 1
 		case vm.OpJmpIfFalse:
 			condition := v.OperandStack.Pop()
 			if condition.Type == vm.BOOLEAN && !condition.BoolData {
-				v.PC = int(instr.Oprand1.IntData)
+				v.PC = int(instr.Oprand1.IntData) - 1
 			}
 		case vm.OpCstInt:
 			val := v.OperandStack.Pop()
