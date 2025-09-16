@@ -75,3 +75,5 @@ end
 dim product_result = multiply[dummy foo] 
 
 print[product_result]
+my_pack->foo = 42
+print[my_pack]

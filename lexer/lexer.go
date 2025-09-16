@@ -71,6 +71,12 @@ func (l *Lexer) NextToken() Token {
 				literal = ">="
 				tokType = GTE
 			}
+		case MINUS:
+			if peek == '>' {
+				l.readChar()
+				literal = "->"
+				tokType = ARROW
+			}
 		}
 		tok = Token{Type: tokType, Literal: literal, Line: startLine, Column: startCol}
 	} else {

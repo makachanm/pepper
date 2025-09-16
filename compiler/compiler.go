@@ -49,12 +49,6 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 	switch node := stmt.(type) {
 	case *parser.ExpressionStatement:
 		c.compileExpr(node.Expression)
-		//if !isExprContext {
-		// Do not pop after an assignment, as OpStoreGlobal now consumes the value.
-	//		if _, ok := node.Expression.(*parser.AssignmentExpression); !ok {
-	//			c.emit(vm.OpPop)
-	//		}
-	//	}
 	case *parser.LetStatement:
 		c.compileLetStatement(node)
 	case *parser.DimStatement:
@@ -97,6 +91,8 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 		c.compileAssignmentExpression(node)
 	case *parser.IndexExpression:
 		c.compileIndexExpression(node)
+	case *parser.MemberAccessExpression:
+		c.compileMemberAccessExpression(node)
 	case *parser.IntegerLiteral:
 		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.INTGER, IntData: node.Value})
 	case *parser.RealLiteral:
@@ -108,10 +104,13 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.NilLiteral:
 		c.emit(vm.OpPush, vm.VMDataObject{}) // Nil
 	case *parser.Identifier:
+		if node.Value == "" {
+			panic("compiling empty identifier")
+		}
 		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Value})
 		c.emit(vm.OpLoadGlobal)
 	case *parser.PackLiteral:
-		c.compilePackLiteral()
+		c.compilePackLiteral(node)
 	default:
 		panic(fmt.Sprintf("Unsupported expression type: %T", expr))
 	}
@@ -249,15 +248,38 @@ func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
 }
 
 func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression) {
-	// c.compileExpr(node.Value) // This line is moved down
-	ident, ok := node.Left.(*parser.Identifier)
-	if ok {
-		c.compileExpr(node.Value) // Moved here
+	if ident, ok := node.Left.(*parser.Identifier); ok {
+		c.compileExpr(node.Value)
 		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
 		c.emit(vm.OpStoreGlobal)
-	} else if _, ok := node.Left.(*parser.IndexExpression); ok {
-		// Placeholder for pack assignment. We are ignoring the statement for now.
-		fmt.Println("Warning: Pack element assignment is a placeholder and is ignored.")
+	} else if indexExpr, ok := node.Left.(*parser.IndexExpression); ok {
+		c.compileExpr(indexExpr.Left)  // pack
+		c.compileExpr(indexExpr.Index) // index
+		c.compileExpr(node.Value)      // value
+		c.emit(vm.OpSetIndex)          // returns modified pack
+
+		if ident, ok := indexExpr.Left.(*parser.Identifier); ok {
+			// The modified pack is on the stack. Now push the name and store.
+			c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
+			c.emit(vm.OpStoreGlobal)
+		} else {
+			// The pack was a result of an expression, can't store it back.
+			// Pop the modified pack from the stack as it's not used.
+			c.emit(vm.OpPop)
+		}
+	} else if memberAccessExpr, ok := node.Left.(*parser.MemberAccessExpression); ok {
+		c.compileExpr(memberAccessExpr.Object)                                                         // pack
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: memberAccessExpr.Member.Value}) // index
+		c.compileExpr(node.Value)                                                                      // value
+		c.emit(vm.OpSetIndex)                                                                          // returns modified pack
+
+		if ident, ok := memberAccessExpr.Object.(*parser.Identifier); ok {
+			// The modified pack is on the stack. Now push the name and store.
+			c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
+			c.emit(vm.OpStoreGlobal)
+		} else {
+			c.emit(vm.OpPop)
+		}
 	} else {
 		panic(fmt.Sprintf("Assignment to this expression type is not supported: %T", node.Left))
 	}
@@ -290,8 +312,6 @@ func (c *Compiler) compileRepeatStatement(node *parser.RepeatStatement) {
 	c.pushLoopContext(loopStart)
 
 	for i := int64(0); i < count.Value; i++ {
-		// For continue to work correctly, it should jump to the start of the next iteration.
-		// This unrolling approach does not support `continue` well.
 		c.compileStmt(node.Body, false)
 	}
 
@@ -317,14 +337,27 @@ func (c *Compiler) compileContinueStatement() {
 	c.emit(vm.OpJmp, vm.VMDataObject{Type: vm.INTGER, IntData: int64(currentLoop.startPos)})
 }
 
-func (c *Compiler) compilePackLiteral() {
-	fmt.Println("Warning: Pack literal compilation is a placeholder.")
-	pack := make(map[vm.PackKey]vm.VMDataObject)
-	c.emit(vm.OpPush, vm.VMDataObject{Type: vm.PACK, PackData: pack})
+func (c *Compiler) compilePackLiteral(node *parser.PackLiteral) {
+	//c.emit(vm.OpPush, vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(node.Pairs))})
+	c.emit(vm.OpMakePack)
+
+	for key, value := range node.Pairs {
+		c.compileExpr(key)
+		c.compileExpr(value)
+		c.emit(vm.OpSetIndex)
+	}
 }
 
 func (c *Compiler) compileIndexExpression(node *parser.IndexExpression) {
-	panic("Pack indexing is not supported by the current VM.")
+	c.compileExpr(node.Left)
+	c.compileExpr(node.Index)
+	c.emit(vm.OpIndex)
+}
+
+func (c *Compiler) compileMemberAccessExpression(node *parser.MemberAccessExpression) {
+	c.compileExpr(node.Object)
+	c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Member.Value})
+	c.emit(vm.OpIndex)
 }
 
 // --- Helper methods ---

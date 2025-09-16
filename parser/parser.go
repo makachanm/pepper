@@ -98,6 +98,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(lexer.OR, p.parseInfixExpression)
 	p.registerInfix(lexer.LBRACKET, p.parseCallExpression)
 	p.registerInfix(lexer.PIPE, p.parseIndexExpression)
+	p.registerInfix(lexer.ARROW, p.parseMemberAccessExpression)
 	p.registerInfix(lexer.ASSIGN, p.parseAssignmentExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
@@ -458,7 +459,7 @@ func (p *Parser) parsePackLiteral() Expression {
 
 func (p *Parser) parseAssignmentExpression(left Expression) Expression {
 	switch left.(type) {
-	case *Identifier, *IndexExpression:
+	case *Identifier, *IndexExpression, *MemberAccessExpression:
 	default:
 		msg := fmt.Sprintf("invalid assignment target %s", left.TokenLiteral())
 		p.errors = append(p.errors, msg)
@@ -612,5 +613,17 @@ func (p *Parser) parseIndexExpression(left Expression) Expression {
 func (p *Parser) parseCallExpression(function Expression) Expression {
 	exp := &CallExpression{Token: p.curToken, Function: function}
 	exp.Arguments = p.parseExpressionList(lexer.RBRACKET)
+	return exp
+}
+
+func (p *Parser) parseMemberAccessExpression(left Expression) Expression {
+	exp := &MemberAccessExpression{Token: p.curToken, Object: left}
+
+	if !p.expectPeek(lexer.IDENT) {
+		return nil
+	}
+
+	exp.Member = &Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
 	return exp
 }

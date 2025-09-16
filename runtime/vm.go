@@ -147,6 +147,42 @@ func (v *VM) Run() {
 			v.OperandStack.Push(val.CastTo(vm.STRING))
 		case vm.OpHlt:
 			return
+		case vm.OpIndex:
+			index := v.OperandStack.Pop()
+			pack := v.OperandStack.Pop()
+			if pack.Type != vm.PACK || pack.PackData == nil {
+				v.OperandStack.Push(vm.VMDataObject{}) // Push nil
+				break
+			}
+			key := vm.PackKey{
+				Type:       index.Type,
+				IntData:    index.IntData,
+				FloatData:  index.FloatData,
+				StringData: index.StringData,
+			}
+			if val, ok := (*pack.PackData)[key]; ok {
+				v.OperandStack.Push(val)
+			} else {
+				v.OperandStack.Push(vm.VMDataObject{}) // Push nil
+			}
+		case vm.OpMakePack:
+			pack := make(map[vm.PackKey]vm.VMDataObject)
+			v.OperandStack.Push(vm.VMDataObject{Type: vm.PACK, PackData: &pack})
+		case vm.OpSetIndex:
+			value := v.OperandStack.Pop()
+			index := v.OperandStack.Pop()
+			pack := v.OperandStack.Pop()
+			if pack.Type != vm.PACK || pack.PackData == nil {
+				break
+			}
+			key := vm.PackKey{
+				Type:       index.Type,
+				IntData:    index.IntData,
+				FloatData:  index.FloatData,
+				StringData: index.StringData,
+			}
+			(*pack.PackData)[key] = value
+			v.OperandStack.Push(pack)
 		}
 
 		v.PC++

@@ -34,7 +34,7 @@ type OperandStack struct {
 }
 
 func NewOperandStack() *OperandStack {
-	return &OperandStack{stack: make([]VMDataObject, 0, 256)}
+	return &OperandStack{stack: make([]VMDataObject, 0, 2048)}
 }
 
 func (s *OperandStack) Push(obj VMDataObject) {
