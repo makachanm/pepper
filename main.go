@@ -29,6 +29,4 @@ func main() {
 
 	vm := runtime.NewVM(comp)
 	vm.Run()
-	//runtime.DumpOperandStack(vm)
-	//runtime.DumpMemory(vm)
 }
