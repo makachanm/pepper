@@ -15,22 +15,22 @@ print["hello world"]
 println["hello world"]
 ```
 
-#### io_readln
+#### readln
 `io_readln` 함수는 표준 입력에서 한 줄을 읽어와 문자열로 반환한다.
 ```
-dim line = io_readln[]
+dim line = readln[]
 ```
 
-#### io_read_file
+#### read_file
 `io_read_file` 함수는 파일 경로를 인자로 받아서 파일의 내용을 문자열로 반환한다.
 ```
-dim content = io_read_file["path/to/file.txt"]
+dim content = read_file["path/to/file.txt"]
 ```
 
-#### io_write_file
+#### write_file
 `io_write_file` 함수는 파일 경로와 내용을 인자로 받아서 파일에 내용을 쓴다. 성공 시 `true`를, 실패 시 `false`를 반환한다.
 ```
-io_write_file["path/to/file.txt", "hello world"]
+write_file["path/to/file.txt", "hello world"]
 ```
 
 ### Math
