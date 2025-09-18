@@ -604,7 +604,7 @@ func (p *Parser) parseIndexExpression(left Expression) Expression {
 	exp := &IndexExpression{Token: p.curToken, Left: left}
 
 	p.nextToken()
-	exp.Index = p.parseExpression(LOWEST)
+	exp.Index = p.parseExpression(INDEX)
 
 	if !p.expectPeek(lexer.PIPE) {
 		return nil

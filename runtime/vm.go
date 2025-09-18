@@ -159,6 +159,7 @@ func (v *VM) Run() {
 				Type:       index.Type,
 				IntData:    index.IntData,
 				FloatData:  index.FloatData,
+				BoolData:   index.BoolData,
 				StringData: index.StringData,
 			}
 			if val, ok := (*pack.PackData)[key]; ok {
@@ -180,6 +181,7 @@ func (v *VM) Run() {
 				Type:       index.Type,
 				IntData:    index.IntData,
 				FloatData:  index.FloatData,
+				BoolData:   index.BoolData,
 				StringData: index.StringData,
 			}
 			(*pack.PackData)[key] = value

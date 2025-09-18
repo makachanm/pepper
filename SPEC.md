@@ -151,14 +151,6 @@ Pack의 특정한 Key에 접근할 때엔 특수한 문법을 사용한다.
 ```
 dim examplepack = [ `foo`: `bar`, `fizz`, `buzz` ]
 examplepack->fizz = `spam`
+examplepack|`fizz`|
 ```
 이때, 특수 문법으로 접근한 Key는 일종의 독립적인 Variable로 취급된다.
-
-### STANDARD FUNCTIONS
-Pepper는 몇가지 표준 함수를 제공한다. 표준 함수는 일반적인 함수와 동일하게 호출할 수 있다.
-
-#### print
-`print` 함수는 하나의 인자를 받아서 표준 출력으로 출력한다.
-```
-print["hello world"]
-```

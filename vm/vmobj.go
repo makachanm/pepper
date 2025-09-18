@@ -17,6 +17,7 @@ type PackKey struct {
 	Type       ValueType
 	IntData    int64
 	FloatData  float64
+	BoolData   bool
 	StringData string
 }
 

@@ -79,6 +79,8 @@ func (l *Lexer) NextToken() Token {
 			}
 		}
 		tok = Token{Type: tokType, Literal: literal, Line: startLine, Column: startCol}
+		l.readChar()
+		return tok
 	} else {
 		if isLetter(l.ch) {
 			literal := l.readIdentifier()
@@ -97,10 +99,9 @@ func (l *Lexer) NextToken() Token {
 		} else {
 			tok = Token{Type: ILLEGAL, Literal: string(l.ch), Line: startLine, Column: startCol}
 		}
+		l.readChar()
+		return tok
 	}
-
-	l.readChar()
-	return tok
 }
 
 func (l *Lexer) skipWhitespace() {
