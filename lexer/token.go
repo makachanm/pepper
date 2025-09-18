@@ -26,6 +26,7 @@ const (
 
 	EQ     TokenType = "=="
 	NOT_EQ TokenType = "!="
+	NSYM   TokenType = "!"
 	LT     TokenType = "<"
 	GT     TokenType = ">"
 	LTE    TokenType = "<="
@@ -110,6 +111,7 @@ var matchingTokens = map[string]TokenType{
 	",":  COMMA,
 	":":  COLON,
 	"|":  PIPE,
+	"!":  NSYM,
 	"\n": NEWLINE,
 }
 

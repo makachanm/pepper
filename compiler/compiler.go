@@ -57,8 +57,15 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 		c.compileExpr(node.ReturnValue)
 		c.emit(vm.OpReturn)
 	case *parser.BlockStatement:
-		for _, s := range node.Statements {
-			c.compileStmt(s, false) // Statements in a BlockStatement are not in an expression context
+		if len(node.Statements) == 0 {
+			if isExprContext {
+				c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
+			}
+			return
+		}
+		last := len(node.Statements) - 1
+		for i, s := range node.Statements {
+			c.compileStmt(s, isExprContext && (i == last))
 		}
 	case *parser.LoopStatement:
 		c.compileLoopStatement(node)
@@ -102,7 +109,7 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.Boolean:
 		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.BOOLEAN, BoolData: node.Value})
 	case *parser.NilLiteral:
-		c.emit(vm.OpPush, vm.VMDataObject{}) // Nil
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Nil
 	case *parser.Identifier:
 		if node.Value == "" {
 			panic("compiling empty identifier")
@@ -118,7 +125,7 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 
 func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 	if len(node.Statements) == 0 {
-		c.emit(vm.OpPush, vm.VMDataObject{}) // Nil for empty block
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Nil for empty block
 		return
 	}
 	last := len(node.Statements) - 1
@@ -136,7 +143,7 @@ func (c *Compiler) compileLetStatement(node *parser.LetStatement) {
 
 func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
 	if node.Value == nil {
-		c.emit(vm.OpPush, vm.VMDataObject{}) // Push nil
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Push nil
 	} else {
 		c.compileExpr(node.Value)
 	}
@@ -195,24 +202,34 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 
 func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 	c.compileExpr(node.Condition)
+	// Emit a jump instruction that will be patched later.
 	jmpIfFalsePos := c.emitWithPlaceholder(vm.OpJmpIfFalse)
 
-	// Consequence
+	// Compile the consequence block. It's an expression, so the last statement's
+	// value should be left on the stack.
 	if len(node.Consequence.Statements) == 0 {
-		c.emit(vm.OpPush, vm.VMDataObject{}) // Nil for empty block
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
 	} else {
-		// The value of the block is the value of the last statement
-		c.compileStmt(node.Consequence.Statements[len(node.Consequence.Statements)-1], true)
+		c.compileStmt(node.Consequence, true)
 	}
 
+	// Emit a jump to skip the alternative block.
 	jmpPos := c.emitWithPlaceholder(vm.OpJmp)
+
+	// Patch the first jump to point to the start of the alternative.
 	c.patchJump(jmpIfFalsePos)
 
+	// Compile the alternative block.
 	if node.Alternative == nil {
-		c.emit(vm.OpPush, vm.VMDataObject{}) // Push nil for false case
+		// If there's no `else` block, the expression evaluates to nil.
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
 	} else {
+		// The alternative is an expression. For an `else` block, this will be
+		// a BlockExpression.
 		c.compileExpr(node.Alternative)
 	}
+
+	// Patch the second jump to point to the end of the if-expression.
 	c.patchJump(jmpPos)
 }
 
@@ -227,7 +244,7 @@ func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 
 	c.compileStmt(node.Body, true)
 	if len(node.Body.Statements) == 0 || !isReturnStatement(node.Body.Statements[len(node.Body.Statements)-1]) {
-		c.emit(vm.OpPush, vm.VMDataObject{}) // Push nil
+		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Push nil
 		c.emit(vm.OpReturn)
 	}
 

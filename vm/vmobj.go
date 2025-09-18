@@ -11,6 +11,7 @@ const (
 	STRING
 	BOOLEAN
 	PACK
+	NIL
 )
 
 type PackKey struct {
@@ -48,6 +49,10 @@ func (d1 VMDataObject) IsEqualTo(d2 VMDataObject) bool {
 	if d1.Type != d2.Type {
 		return false
 	}
+
+	if d1.Type == NIL && d2.Type == NIL {
+		return true
+	}
 	switch d1.Type {
 	case INTGER:
 		return d1.IntData == d2.IntData
@@ -71,12 +76,45 @@ func (d1 VMDataObject) IsEqualTo(d2 VMDataObject) bool {
 			}
 		}
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (d1 VMDataObject) IsNotEqualTo(d2 VMDataObject) bool {
-	return !d1.IsEqualTo(d2)
+	if d1.Type != d2.Type {
+		return true
+	}
+
+	if d1.Type == NIL && d2.Type == NIL {
+		return false
+	}
+	switch d1.Type {
+	case INTGER:
+		return d1.IntData != d2.IntData
+	case REAL:
+		return d1.FloatData != d2.FloatData
+	case STRING:
+		return d1.StringData != d2.StringData
+	case BOOLEAN:
+		return d1.BoolData != d2.BoolData
+	case PACK:
+		if d1.PackData != nil || d2.PackData != nil {
+			return d1.PackData != d2.PackData
+		}
+		if len(*d1.PackData) != len(*d2.PackData) {
+			return true
+		}
+		for k, v1 := range *d1.PackData {
+			v2, ok := (*d2.PackData)[k]
+			if !ok || !v1.IsEqualTo(v2) {
+				return true
+			}
+		}
+		return false
+	default:
+		return false
+	}
 }
 
 func (d VMDataObject) String() string {

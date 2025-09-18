@@ -131,11 +131,13 @@ func (v *VM) Run() {
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }))
 		case vm.OpJmp:
-			v.PC = int(instr.Oprand1.IntData) - 1
+			v.PC = int(instr.Oprand1.IntData)
+			continue
 		case vm.OpJmpIfFalse:
 			condition := v.OperandStack.Pop()
 			if condition.Type == vm.BOOLEAN && !condition.BoolData {
-				v.PC = int(instr.Oprand1.IntData) - 1
+				v.PC = int(instr.Oprand1.IntData)
+				continue
 			}
 		case vm.OpCstInt:
 			val := v.OperandStack.Pop()

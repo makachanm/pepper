@@ -339,6 +339,10 @@ func (p *Parser) parseIfExpression() Expression {
 		expression.Alternative = &BlockExpression{Token: block.Token, Statements: block.Statements}
 	}
 
+	if !p.curTokenIs(lexer.END) {
+		return nil
+	}
+
 	return expression
 }
 

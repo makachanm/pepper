@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: pepper <file>")
+	if len(os.Args) == 3 && os.Args[2] != "-d" {
+		fmt.Println("Usage: pepper <file> [-d for debug]")
 		return
 	}
 
@@ -27,6 +27,20 @@ func main() {
 	program := p.ParseProgram()
 	comp := compiler.NewCompiler().Compile(program)
 
+	if len(os.Args) == 3 && os.Args[2] == "-d" {
+		fmt.Println("Instructions:")
+		for i, instr := range comp {
+			fmt.Printf("%04d %s\n", i, runtime.ResolveVMInstruction(instr))
+		}
+	}
+
 	vm := runtime.NewVM(comp)
 	vm.Run()
+
+	if len(os.Args) == 3 && os.Args[2] == "-d" {
+		fmt.Println("Stack:")
+		runtime.DumpOperandStack(vm)
+		fmt.Println("Memory:")
+		runtime.DumpMemory(vm)
+	}
 }

@@ -59,6 +59,12 @@ func (l *Lexer) NextToken() Token {
 				literal = "=="
 				tokType = EQ
 			}
+		case NSYM:
+			if peek == '=' {
+				l.readChar()
+				literal = "!="
+				tokType = NOT_EQ
+			}
 		case LT:
 			if peek == '=' {
 				l.readChar()
