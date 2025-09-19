@@ -42,7 +42,7 @@ type VMDataObject struct {
 	FloatData  float64
 	BoolData   bool
 	StringData string
-	PackData   *map[PackKey]VMDataObject
+	PackData   map[PackKey]VMDataObject
 }
 
 func (d1 VMDataObject) IsEqualTo(d2 VMDataObject) bool {
@@ -64,13 +64,17 @@ func (d1 VMDataObject) IsEqualTo(d2 VMDataObject) bool {
 		return d1.BoolData == d2.BoolData
 	case PACK:
 		if d1.PackData == nil || d2.PackData == nil {
-			return d1.PackData == d2.PackData
+			if d1.PackData != nil || d2.PackData == nil {
+				return false
+			} else if d1.PackData == nil && d2.PackData != nil {
+				return false
+			}
 		}
-		if len(*d1.PackData) != len(*d2.PackData) {
+		if len(d1.PackData) != len(d2.PackData) {
 			return false
 		}
-		for k, v1 := range *d1.PackData {
-			v2, ok := (*d2.PackData)[k]
+		for k, v1 := range d1.PackData {
+			v2, ok := (d2.PackData)[k]
 			if !ok || !v1.IsEqualTo(v2) {
 				return false
 			}
@@ -99,14 +103,16 @@ func (d1 VMDataObject) IsNotEqualTo(d2 VMDataObject) bool {
 	case BOOLEAN:
 		return d1.BoolData != d2.BoolData
 	case PACK:
-		if d1.PackData != nil || d2.PackData != nil {
-			return d1.PackData != d2.PackData
+		if d1.PackData != nil || d2.PackData == nil {
+			return false
+		} else if d1.PackData == nil && d2.PackData != nil {
+			return false
 		}
-		if len(*d1.PackData) != len(*d2.PackData) {
+		if len(d1.PackData) != len(d2.PackData) {
 			return true
 		}
-		for k, v1 := range *d1.PackData {
-			v2, ok := (*d2.PackData)[k]
+		for k, v1 := range d1.PackData {
+			v2, ok := (d2.PackData)[k]
 			if !ok || !v1.IsEqualTo(v2) {
 				return true
 			}
@@ -137,11 +143,11 @@ func (d VMDataObject) String() string {
 		var builder strings.Builder
 		builder.WriteString("[")
 		i := 0
-		for k, v := range *d.PackData {
+		for k, v := range d.PackData {
 			builder.WriteString(k.String())
 			builder.WriteString(": ")
 			builder.WriteString(v.String())
-			if i < len(*d.PackData)-1 {
+			if i < len(d.PackData)-1 {
 				builder.WriteString(", ")
 			}
 			i++

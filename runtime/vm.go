@@ -164,14 +164,14 @@ func (v *VM) Run() {
 				BoolData:   index.BoolData,
 				StringData: index.StringData,
 			}
-			if val, ok := (*pack.PackData)[key]; ok {
+			if val, ok := (pack.PackData)[key]; ok {
 				v.OperandStack.Push(val)
 			} else {
 				v.OperandStack.Push(vm.VMDataObject{}) // Push nil
 			}
 		case vm.OpMakePack:
 			pack := make(map[vm.PackKey]vm.VMDataObject)
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.PACK, PackData: &pack})
+			v.OperandStack.Push(vm.VMDataObject{Type: vm.PACK, PackData: pack})
 		case vm.OpSetIndex:
 			value := v.OperandStack.Pop()
 			index := v.OperandStack.Pop()
@@ -186,7 +186,7 @@ func (v *VM) Run() {
 				BoolData:   index.BoolData,
 				StringData: index.StringData,
 			}
-			(*pack.PackData)[key] = value
+			(pack.PackData)[key] = value
 			v.OperandStack.Push(pack)
 
 		}

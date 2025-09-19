@@ -27,14 +27,14 @@ func convertInterfaceToVMObject(data interface{}) vm.VMDataObject {
 			packKey := vm.PackKey{Type: vm.STRING, StringData: key}
 			packData[packKey] = convertInterfaceToVMObject(value)
 		}
-		return vm.VMDataObject{Type: vm.PACK, PackData: &packData}
+		return vm.VMDataObject{Type: vm.PACK, PackData: packData}
 	case []interface{}:
 		packData := make(map[vm.PackKey]vm.VMDataObject)
 		for i, value := range v {
 			packKey := vm.PackKey{Type: vm.INTGER, IntData: int64(i)}
 			packData[packKey] = convertInterfaceToVMObject(value)
 		}
-		return vm.VMDataObject{Type: vm.PACK, PackData: &packData}
+		return vm.VMDataObject{Type: vm.PACK, PackData: packData}
 	default:
 		// Return a nil VMDataObject for unsupported types
 		return vm.VMDataObject{}
@@ -59,8 +59,8 @@ func convertVMObjectToInterface(obj vm.VMDataObject) interface{} {
 
 		// Check if all keys are integers to determine if it should be an array or map
 		isArray := true
-		keys := make([]int, 0, len(*obj.PackData))
-		for k := range *obj.PackData {
+		keys := make([]int, 0, len(obj.PackData))
+		for k := range obj.PackData {
 			if k.Type != vm.INTGER {
 				isArray = false
 				break
@@ -81,10 +81,10 @@ func convertVMObjectToInterface(obj vm.VMDataObject) interface{} {
 			}
 
 			if isArray {
-				slice := make([]interface{}, len(*obj.PackData))
+				slice := make([]interface{}, len(obj.PackData))
 				for i := range slice {
 					key := vm.PackKey{Type: vm.INTGER, IntData: int64(i)}
-					slice[i] = convertVMObjectToInterface((*obj.PackData)[key])
+					slice[i] = convertVMObjectToInterface((obj.PackData)[key])
 				}
 				return slice
 			}
@@ -92,7 +92,7 @@ func convertVMObjectToInterface(obj vm.VMDataObject) interface{} {
 
 		// If not a sequential array, treat as a map
 		resultMap := make(map[string]interface{})
-		for k, v := range *obj.PackData {
+		for k, v := range obj.PackData {
 			resultMap[k.String()] = convertVMObjectToInterface(v)
 		}
 		return resultMap

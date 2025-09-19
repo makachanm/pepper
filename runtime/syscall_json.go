@@ -49,7 +49,7 @@ func vmObjectToInterface(obj vm.VMDataObject) interface{} {
 		// Check if it can be an array
 		is_array := true
 		max_index := int64(-1)
-		for key := range *obj.PackData {
+		for key := range obj.PackData {
 			if key.Type != vm.INTGER {
 				is_array = false
 				break
@@ -61,13 +61,13 @@ func vmObjectToInterface(obj vm.VMDataObject) interface{} {
 
 		if is_array {
 			arr := make([]interface{}, max_index+1)
-			for key, val := range *obj.PackData {
+			for key, val := range obj.PackData {
 				arr[key.IntData] = vmObjectToInterface(val)
 			}
 			return arr
 		} else {
 			dict := make(map[string]interface{})
-			for key, val := range *obj.PackData {
+			for key, val := range obj.PackData {
 				dict[key.String()] = vmObjectToInterface(val)
 			}
 			return dict
@@ -95,7 +95,7 @@ func interfaceToVmObject(data interface{}) vm.VMDataObject {
 			key := vm.PackKey{Type: vm.INTGER, IntData: int64(i)}
 			pack[key] = interfaceToVmObject(item)
 		}
-		return vm.VMDataObject{Type: vm.PACK, PackData: &pack}
+		return vm.VMDataObject{Type: vm.PACK, PackData: pack}
 	case map[string]interface{}:
 		pack := make(map[vm.PackKey]vm.VMDataObject)
 		for k, item := range v {
@@ -106,7 +106,7 @@ func interfaceToVmObject(data interface{}) vm.VMDataObject {
 			}
 			pack[key] = interfaceToVmObject(item)
 		}
-		return vm.VMDataObject{Type: vm.PACK, PackData: &pack}
+		return vm.VMDataObject{Type: vm.PACK, PackData: pack}
 	default:
 		return vm.VMDataObject{}
 	}

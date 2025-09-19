@@ -132,11 +132,11 @@ func formatVMDataObject(obj vm.VMDataObject) string {
 		var builder strings.Builder
 		builder.WriteString("PACK([")
 		i := 0
-		for k, v := range *obj.PackData {
+		for k, v := range obj.PackData {
 			builder.WriteString(k.String())
 			builder.WriteString(": ")
 			builder.WriteString(formatVMDataObject(v))
-			if i < len(*obj.PackData)-1 {
+			if i < len(obj.PackData)-1 {
 				builder.WriteString(", ")
 			}
 			i++
