@@ -98,5 +98,52 @@ func doSyscallMath(v VM, code int64) {
 		} else {
 			panic("len() syscall expects a pack type")
 		}
+
+	case 109: // asin
+		val := v.OperandStack.Pop()
+		var res float64
+		if val.Type == vm.REAL {
+			res = math.Asin(val.FloatData)
+		} else if val.Type == vm.INTGER {
+			res = math.Asin(float64(val.IntData))
+		}
+		v.OperandStack.Push(vm.VMDataObject{Type: vm.REAL, FloatData: res})
+
+	case 110: // acos
+		val := v.OperandStack.Pop()
+		var res float64
+		if val.Type == vm.REAL {
+			res = math.Acos(val.FloatData)
+		} else if val.Type == vm.INTGER {
+			res = math.Acos(float64(val.IntData))
+		}
+		v.OperandStack.Push(vm.VMDataObject{Type: vm.REAL, FloatData: res})
+
+	case 111: // atan
+		val := v.OperandStack.Pop()
+		var res float64
+		if val.Type == vm.REAL {
+			res = math.Atan(val.FloatData)
+		} else if val.Type == vm.INTGER {
+			res = math.Atan(float64(val.IntData))
+		}
+		v.OperandStack.Push(vm.VMDataObject{Type: vm.REAL, FloatData: res})
+
+	case 112: // atan2
+		x_op := v.OperandStack.Pop()
+		y_op := v.OperandStack.Pop()
+		var x, y float64
+		if x_op.Type == vm.REAL {
+			x = x_op.FloatData
+		} else if x_op.Type == vm.INTGER {
+			x = float64(x_op.IntData)
+		}
+		if y_op.Type == vm.REAL {
+			y = y_op.FloatData
+		} else if y_op.Type == vm.INTGER {
+			y = float64(y_op.IntData)
+		}
+		res := math.Atan2(y, x)
+		v.OperandStack.Push(vm.VMDataObject{Type: vm.REAL, FloatData: res})
 	}
 }

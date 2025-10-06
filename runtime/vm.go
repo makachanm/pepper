@@ -27,6 +27,9 @@ func NewVM(input []vm.VMInstr, wg *sync.WaitGroup) *VM {
 
 func (v *VM) Run() {
 	for v.PC < len(v.Program) {
+		if ShouldQuit {
+			return
+		}
 		instr := v.Program[v.PC]
 
 		switch instr.Op {
@@ -46,23 +49,26 @@ func (v *VM) Run() {
 			val := v.Memory.GetObj(name)
 			v.OperandStack.Push(*val)
 		case vm.OpDefFunc:
+			// The compiler now emits an OpJmp instruction right after OpDefFunc
+			// to skip the function body during the initial pass. The VM will
+			// just execute that jump.
+			// The JumpPc for the function call needs to point to the instruction
+			// right after the OpJmp, which is at PC + 2.
 			funcName := instr.Oprand1.StringData
 			funcObj := vm.VMFunctionObject{
-				JumpPc: v.PC,
+				JumpPc: v.PC + 2, // PC is at OpDefFunc, +1 is OpJmp, +2 is start of body
 			}
 			v.Memory.MakeFunc(funcName)
 			v.Memory.SetFunc(funcName, funcObj)
 
-			// Skip to the end of the function definition
-			for v.PC < len(v.Program) && v.Program[v.PC].Op != vm.OpReturn {
-				v.PC += 2
-			}
+			// The VM's main loop will increment PC, and the OpJmp will be executed,
+			// so no manual skipping is needed here.
 		case vm.OpCall:
 			funcName := v.OperandStack.Pop().StringData
 			function := v.Memory.GetFunc(funcName)
 
 			v.CallStack.Push(v.PC)
-			v.PC = function.JumpPc
+			v.PC = function.JumpPc - 1
 		case vm.OpReturn:
 			if v.CallStack.IsEmpty() {
 				return // Or handle error

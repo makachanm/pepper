@@ -107,8 +107,6 @@ if-elif-else 구조의 흐름은 키워드의 다음으로 주어진 표현식�
 ```
 if [a > b] then
     (some code...)
-elif [a == b] then
-    (some code...)
 else then
     (some code...)
 end

@@ -160,34 +160,33 @@ func (d VMDataObject) String() string {
 }
 
 func (r1 VMDataObject) Compare(r2 VMDataObject, floatOp func(float64, float64) bool, intOp func(int64, int64) bool) VMDataObject {
-	// Default to false if types are incompatible
-	result := false
-
-	switch r1.Type {
-	case INTGER:
-		switch r2.Type {
-		case INTGER:
-			if intOp != nil {
-				result = intOp(r1.IntData, r2.IntData)
-			}
-		case REAL:
-			if floatOp != nil {
-				result = floatOp(float64(r1.IntData), r2.FloatData)
-			}
+	// If one is REAL, convert both to REAL for comparison
+	if r1.Type == REAL || r2.Type == REAL {
+		var f1, f2 float64
+		if r1.Type == REAL {
+			f1 = r1.FloatData
+		} else { // r1 is INTGER
+			f1 = float64(r1.IntData)
 		}
-	case REAL:
-		switch r2.Type {
-		case INTGER:
-			if floatOp != nil {
-				result = floatOp(r1.FloatData, float64(r2.IntData))
-			}
-		case REAL:
-			if floatOp != nil {
-				result = floatOp(r1.FloatData, r2.FloatData)
-			}
+		if r2.Type == REAL {
+			f2 = r2.FloatData
+		} else { // r2 is INTGER
+			f2 = float64(r2.IntData)
+		}
+		if floatOp != nil {
+			return VMDataObject{Type: BOOLEAN, BoolData: floatOp(f1, f2)}
 		}
 	}
-	return VMDataObject{Type: BOOLEAN, BoolData: result}
+
+	// Otherwise, both are INTGER
+	if r1.Type == INTGER && r2.Type == INTGER {
+		if intOp != nil {
+			return VMDataObject{Type: BOOLEAN, BoolData: intOp(r1.IntData, r2.IntData)}
+		}
+	}
+
+	// Default to false for other types or nil ops
+	return VMDataObject{Type: BOOLEAN, BoolData: false}
 }
 
 func (r1 VMDataObject) Operate(r2 VMDataObject, floatOp func(float64, float64) float64, intOp func(int64, int64) int64, strOp func(string, string) string) VMDataObject {

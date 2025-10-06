@@ -1,5 +1,7 @@
 package runtime
 
+var ShouldQuit = false
+
 func doSyscall(v VM, code int64) {
 	switch {
 	case code >= 0 && code < 100:

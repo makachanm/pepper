@@ -31,6 +31,7 @@ func (c *Compiler) Compile(program *parser.Program) []vm.VMInstr {
 	c.defineStandardFunctions()
 	for name, instrs := range c.standardFunctionMaps {
 		c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpDefFunc, Oprand1: vm.VMDataObject{Type: vm.STRING, StringData: name}})
+		c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpJmp, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(c.instructions)) + 3}})
 		c.instructions = append(c.instructions, instrs...)
 		c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpReturn})
 	}
@@ -224,9 +225,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 		// If there's no `else` block, the expression evaluates to nil.
 		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
 	} else {
-		// The alternative is an expression. For an `else` block, this will be
-		// a BlockExpression.
-		c.compileExpr(node.Alternative)
+		c.compileStmt(node.Alternative, true)
 	}
 
 	// Patch the second jump to point to the end of the if-expression.
@@ -236,8 +235,14 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 	c.emit(vm.OpDefFunc, vm.VMDataObject{Type: vm.STRING, StringData: node.Name.Value})
 
-	// TODO: Handle parameters
-	for _, pname := range node.Parameters {
+	// Emit a jump to skip the function body during initial execution
+	jumpPos := c.emitWithPlaceholder(vm.OpJmp)
+
+	// Parameters are handled at the beginning of the function body execution.
+	// The arguments are pushed onto the stack by the caller.
+	// We iterate in reverse to assign them correctly.
+	for i := len(node.Parameters) - 1; i >= 0; i-- {
+		pname := node.Parameters[i]
 		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: pname.Value})
 		c.emit(vm.OpStoreGlobal)
 	}
@@ -248,6 +253,8 @@ func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 		c.emit(vm.OpReturn)
 	}
 
+	// Patch the jump to the instruction after the function body.
+	c.patchJump(jumpPos)
 }
 
 func (c *Compiler) compileCallExpression(node *parser.CallExpression) {

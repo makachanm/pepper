@@ -148,7 +148,7 @@ type IfExpression struct {
 	Token       lexer.Token // The 'if' token
 	Condition   Expression
 	Consequence *BlockStatement
-	Alternative Expression
+	Alternative *BlockStatement
 }
 
 func (ie *IfExpression) expressionNode()      {}

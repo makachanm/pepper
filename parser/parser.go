@@ -329,14 +329,20 @@ func (p *Parser) parseIfExpression() Expression {
 	expression.Consequence = p.parseBlockStatement()
 
 	if p.curTokenIs(lexer.ELIF) {
-		expression.Alternative = p.parseIfExpression()
+		elifToken := p.curToken
+		ifExpr := p.parseIfExpression()
+		if ifExpr == nil {
+			return nil
+		}
+		exprStmt := &ExpressionStatement{Token: elifToken, Expression: ifExpr}
+		altBlock := &BlockStatement{Token: elifToken, Statements: []Statement{exprStmt}}
+		expression.Alternative = altBlock
 	} else if p.curTokenIs(lexer.ELSE) {
 		if !p.expectPeek(lexer.THEN) {
 			return nil
 		}
 
-		block := p.parseBlockStatement()
-		expression.Alternative = &BlockExpression{Token: block.Token, Statements: block.Statements}
+		expression.Alternative = p.parseBlockStatement()
 	}
 
 	if !p.curTokenIs(lexer.END) {

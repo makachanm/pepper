@@ -33,13 +33,66 @@ func NewGraphics(width, height int, wg *sync.WaitGroup) *PepperGraphics {
 
 	cairoSurface := cairo.NewSurfaceFromData(sdlSurface.Data(), cairo.FORMAT_ARGB32, width, height, int(sdlSurface.Pitch))
 
-	return &PepperGraphics{
+	pg := &PepperGraphics{
 		Width:   width,
 		Height:  height,
 		Window:  window,
 		Surface: cairoSurface,
 		wg:      wg,
 	}
+
+	// Start the event loop in a separate goroutine
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for !ShouldQuit {
+			event := sdl.PollEvent()
+			if event != nil {
+				switch e := event.(type) {
+				case *sdl.QuitEvent:
+					EventQueue.Enqueue(Event{Type: EventTypeQuit})
+					ShouldQuit = true // Signal VM to quit
+				case *sdl.MouseMotionEvent:
+					EventQueue.Enqueue(Event{
+						Type: EventTypeMouseMotion,
+						X:    int(e.X),
+						Y:    int(e.Y),
+					})
+				case *sdl.MouseButtonEvent:
+					var eventType EventType
+					if e.State == sdl.PRESSED {
+						eventType = EventTypeMouseButtonDown
+					} else {
+						eventType = EventTypeMouseButtonUp
+					}
+					EventQueue.Enqueue(Event{
+						Type:   eventType,
+						X:      int(e.X),
+						Y:      int(e.Y),
+						Button: e.Button,
+					})
+				case *sdl.KeyboardEvent:
+					var eventType EventType
+					if e.State == sdl.PRESSED {
+						eventType = EventTypeKeyDown
+					} else {
+						eventType = EventTypeKeyUp
+					}
+					EventQueue.Enqueue(Event{
+						Type:    eventType,
+						Key:     e.Keysym.Sym,
+						KeyName: sdl.GetKeyName(e.Keysym.Sym),
+					})
+				}
+			}
+			// Small delay to prevent busy-waiting
+		}
+		pg.Surface.Finish()
+		pg.Window.Destroy()
+		sdl.Quit()
+	}()
+
+	return pg
 }
 
 func (pg *PepperGraphics) Resize(width, height int) {
@@ -109,22 +162,4 @@ func (pg *PepperGraphics) SaveToFile(filename string) {
 func (pg *PepperGraphics) Finish() {
 	pg.Surface.Flush()
 	pg.Window.UpdateSurface()
-
-	pg.wg.Add(1)
-	go func() {
-		defer pg.wg.Done()
-		for {
-			event := sdl.PollEvent()
-			if event != nil {
-				switch event.(type) {
-				case *sdl.QuitEvent:
-					pg.Surface.Finish()
-					pg.Window.Destroy()
-					sdl.Quit()
-					return
-				}
-			}
-			sdl.Delay(33)
-		}
-	}()
 }

@@ -16,62 +16,263 @@ func GfxClear(stack *vm.OperandStack) {
 }
 
 func GfxSetSourceRGB(stack *vm.OperandStack) {
-	b := stack.Pop().IntData
-	g := stack.Pop().IntData
-	r := stack.Pop().IntData
-	Gfx.SetSourceRGB(float64(r), float64(g), float64(b))
+	bObj := stack.Pop()
+	gObj := stack.Pop()
+	rObj := stack.Pop()
+
+	var r, g, b float64
+
+	if rObj.Type == vm.REAL {
+		r = rObj.FloatData
+	} else {
+		r = float64(rObj.IntData) / 255.0
+	}
+
+	if gObj.Type == vm.REAL {
+		g = gObj.FloatData
+	} else {
+		g = float64(gObj.IntData) / 255.0
+	}
+
+	if bObj.Type == vm.REAL {
+		b = bObj.FloatData
+	} else {
+		b = float64(bObj.IntData) / 255.0
+	}
+
+	Gfx.SetSourceRGB(r, g, b)
 }
 
 func GfxDrawRect(stack *vm.OperandStack) {
-	height := stack.Pop().IntData
-	width := stack.Pop().IntData
-	y := stack.Pop().IntData
-	x := stack.Pop().IntData
-	Gfx.DrawRect(int(x), int(y), int(width), int(height))
+	heightObj := stack.Pop()
+	widthObj := stack.Pop()
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y, width, height int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	if widthObj.Type == vm.REAL {
+		width = int(widthObj.FloatData)
+	} else {
+		width = int(widthObj.IntData)
+	}
+
+	if heightObj.Type == vm.REAL {
+		height = int(heightObj.FloatData)
+	} else {
+		height = int(heightObj.IntData)
+	}
+
+	Gfx.DrawRect(x, y, width, height)
 }
 
 func GfxDrawCircle(stack *vm.OperandStack) {
-	radius := stack.Pop().IntData
-	y := stack.Pop().IntData
-	x := stack.Pop().IntData
-	Gfx.DrawCircle(int(x), int(y), int(radius))
+	radiusObj := stack.Pop()
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y, radius int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	if radiusObj.Type == vm.REAL {
+		radius = int(radiusObj.FloatData)
+	} else {
+		radius = int(radiusObj.IntData)
+	}
+
+	Gfx.DrawCircle(x, y, radius)
 }
 
 func GfxDrawLine(stack *vm.OperandStack) {
-	y2 := stack.Pop().IntData
-	x2 := stack.Pop().IntData
-	y1 := stack.Pop().IntData
-	x1 := stack.Pop().IntData
-	Gfx.DrawLine(int(x1), int(y1), int(x2), int(y2))
+	y2Obj := stack.Pop()
+	x2Obj := stack.Pop()
+	y1Obj := stack.Pop()
+	x1Obj := stack.Pop()
+
+	var x1, y1, x2, y2 int
+
+	if x1Obj.Type == vm.REAL {
+		x1 = int(x1Obj.FloatData)
+	} else {
+		x1 = int(x1Obj.IntData)
+	}
+
+	if y1Obj.Type == vm.REAL {
+		y1 = int(y1Obj.FloatData)
+	} else {
+		y1 = int(y1Obj.IntData)
+	}
+
+	if x2Obj.Type == vm.REAL {
+		x2 = int(x2Obj.FloatData)
+	} else {
+		x2 = int(x2Obj.IntData)
+	}
+
+	if y2Obj.Type == vm.REAL {
+		y2 = int(y2Obj.FloatData)
+	} else {
+		y2 = int(y2Obj.IntData)
+	}
+
+	Gfx.DrawLine(x1, y1, x2, y2)
 }
 
 func GfxDrawTriangle(stack *vm.OperandStack) {
-	y3 := stack.Pop().IntData
-	x3 := stack.Pop().IntData
-	y2 := stack.Pop().IntData
-	x2 := stack.Pop().IntData
-	y1 := stack.Pop().IntData
-	x1 := stack.Pop().IntData
-	Gfx.DrawTriangle(int(x1), int(y1), int(x2), int(y2), int(x3), int(y3))
+	y3Obj := stack.Pop()
+	x3Obj := stack.Pop()
+	y2Obj := stack.Pop()
+	x2Obj := stack.Pop()
+	y1Obj := stack.Pop()
+	x1Obj := stack.Pop()
+
+	var x1, y1, x2, y2, x3, y3 int
+
+	if x1Obj.Type == vm.REAL {
+		x1 = int(x1Obj.FloatData)
+	} else {
+		x1 = int(x1Obj.IntData)
+	}
+
+	if y1Obj.Type == vm.REAL {
+		y1 = int(y1Obj.FloatData)
+	} else {
+		y1 = int(y1Obj.IntData)
+	}
+
+	if x2Obj.Type == vm.REAL {
+		x2 = int(x2Obj.FloatData)
+	} else {
+		x2 = int(x2Obj.IntData)
+	}
+
+	if y2Obj.Type == vm.REAL {
+		y2 = int(y2Obj.FloatData)
+	} else {
+		y2 = int(y2Obj.IntData)
+	}
+
+	if x3Obj.Type == vm.REAL {
+		x3 = int(x3Obj.FloatData)
+	} else {
+		x3 = int(x3Obj.IntData)
+	}
+
+	if y3Obj.Type == vm.REAL {
+		y3 = int(y3Obj.FloatData)
+	} else {
+		y3 = int(y3Obj.IntData)
+	}
+
+	Gfx.DrawTriangle(x1, y1, x2, y2, x3, y3)
 }
 
 func GfxDrawBezier(stack *vm.OperandStack) {
-	y4 := stack.Pop().IntData
-	x4 := stack.Pop().IntData
-	y3 := stack.Pop().IntData
-	x3 := stack.Pop().IntData
-	y2 := stack.Pop().IntData
-	x2 := stack.Pop().IntData
-	y1 := stack.Pop().IntData
-	x1 := stack.Pop().IntData
-	Gfx.DrawBezier(int(x1), int(y1), int(x2), int(y2), int(x3), int(y3), int(x4), int(y4))
+	y4Obj := stack.Pop()
+	x4Obj := stack.Pop()
+	y3Obj := stack.Pop()
+	x3Obj := stack.Pop()
+	y2Obj := stack.Pop()
+	x2Obj := stack.Pop()
+	y1Obj := stack.Pop()
+	x1Obj := stack.Pop()
+
+	var x1, y1, x2, y2, x3, y3, x4, y4 int
+
+	if x1Obj.Type == vm.REAL {
+		x1 = int(x1Obj.FloatData)
+	} else {
+		x1 = int(x1Obj.IntData)
+	}
+
+	if y1Obj.Type == vm.REAL {
+		y1 = int(y1Obj.FloatData)
+	} else {
+		y1 = int(y1Obj.IntData)
+	}
+
+	if x2Obj.Type == vm.REAL {
+		x2 = int(x2Obj.FloatData)
+	} else {
+		x2 = int(x2Obj.IntData)
+	}
+
+	if y2Obj.Type == vm.REAL {
+		y2 = int(y2Obj.FloatData)
+	} else {
+		y2 = int(y2Obj.IntData)
+	}
+
+	if x3Obj.Type == vm.REAL {
+		x3 = int(x3Obj.FloatData)
+	} else {
+		x3 = int(x3Obj.IntData)
+	}
+
+	if y3Obj.Type == vm.REAL {
+		y3 = int(y3Obj.FloatData)
+	} else {
+		y3 = int(y3Obj.IntData)
+	}
+
+	if x4Obj.Type == vm.REAL {
+		x4 = int(x4Obj.FloatData)
+	} else {
+		x4 = int(x4Obj.IntData)
+	}
+
+	if y4Obj.Type == vm.REAL {
+		y4 = int(y4Obj.FloatData)
+	} else {
+		y4 = int(y4Obj.IntData)
+	}
+
+	Gfx.DrawBezier(x1, y1, x2, y2, x3, y3, x4, y4)
 }
 
 func GfxDrawText(stack *vm.OperandStack) {
 	text := stack.Pop().StringData
-	y := stack.Pop().IntData
-	x := stack.Pop().IntData
-	Gfx.DrawText(int(x), int(y), text)
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	Gfx.DrawText(x, y, text)
 }
 
 func GfxSetFontFace(stack *vm.OperandStack) {
@@ -80,8 +281,14 @@ func GfxSetFontFace(stack *vm.OperandStack) {
 }
 
 func GfxSetFontSize(stack *vm.OperandStack) {
-	size := stack.Pop().IntData
-	Gfx.SetFontSize(float64(size))
+	sizeObj := stack.Pop()
+	var size float64
+	if sizeObj.Type == vm.REAL {
+		size = sizeObj.FloatData
+	} else {
+		size = float64(sizeObj.IntData)
+	}
+	Gfx.SetFontSize(size)
 }
 
 func GfxSaveToFile(stack *vm.OperandStack) {
