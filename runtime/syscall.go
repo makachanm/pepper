@@ -14,6 +14,8 @@ func doSyscall(v VM, code int64) {
 		doSyscallHttp(v, code)
 	case code >= 500 && code < 600:
 		doSyscallJson(v, code)
+	case code >= 600 && code < 700:
+		doSyscallTime(v, code)
 	default:
 		panic("Unknown or unimplemented syscall code")
 	}

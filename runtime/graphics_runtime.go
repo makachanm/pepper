@@ -2,12 +2,13 @@ package runtime
 
 import (
 	"pepper/vm"
+	"sync"
 )
 
-var Gfx *CairoGraphics
+var Gfx Graphics
 
-func GfxNew(width, height int) {
-	Gfx = NewCairoGraphics(width, height)
+func GfxNew(width, height int, wg *sync.WaitGroup) {
+	Gfx = NewGraphics(width, height, wg)
 }
 
 func GfxClear(stack *vm.OperandStack) {

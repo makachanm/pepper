@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"pepper/vm"
+	"sync"
 )
 
 type VM struct {
@@ -12,9 +13,9 @@ type VM struct {
 	PC           int
 }
 
-func NewVM(input []vm.VMInstr) *VM {
+func NewVM(input []vm.VMInstr, wg *sync.WaitGroup) *VM {
 	mem := vm.NewVMMEMObjTable()
-	GfxNew(640, 480) // Initialize graphics context
+	GfxNew(640, 480, wg) // Initialize graphics context
 	return &VM{
 		CallStack:    vm.NewCallStack(),
 		OperandStack: vm.NewOperandStack(),

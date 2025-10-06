@@ -8,6 +8,7 @@ import (
 	"pepper/lexer"
 	"pepper/parser"
 	"pepper/runtime"
+	"sync"
 )
 
 func main() {
@@ -34,7 +35,8 @@ func main() {
 		}
 	}
 
-	vm := runtime.NewVM(comp)
+	var wg sync.WaitGroup
+	vm := runtime.NewVM(comp, &wg)
 	vm.Run()
 
 	if len(os.Args) == 3 && os.Args[2] == "-d" {
@@ -43,4 +45,6 @@ func main() {
 		fmt.Println("Memory:")
 		runtime.DumpMemory(vm)
 	}
+
+	wg.Wait()
 }
