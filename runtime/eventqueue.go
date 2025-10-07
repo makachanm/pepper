@@ -48,5 +48,9 @@ func (q *eventQueue) Dequeue() Event {
 	return <-q.events
 }
 
+func (q *eventQueue) IsEmpty() bool {
+	return len(q.events) == 0
+}
+
 // EventQueue is the global instance of the event queue.
 var EventQueue = newEventQueue()

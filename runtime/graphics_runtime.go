@@ -11,6 +11,42 @@ func GfxNew(width, height int, wg *sync.WaitGroup) {
 	Gfx = NewGraphics(width, height, wg)
 }
 
+func GfxResize(stack *vm.OperandStack) {
+	heightObj := stack.Pop()
+	widthObj := stack.Pop()
+
+	var width, height int
+
+	if widthObj.Type == vm.REAL {
+		width = int(widthObj.FloatData)
+	} else {
+		width = int(widthObj.IntData)
+	}
+
+	if heightObj.Type == vm.REAL {
+		height = int(heightObj.FloatData)
+	} else {
+		height = int(heightObj.IntData)
+	}
+
+	Gfx.Resize(width, height)
+}
+
+func GfxGetWidth(stack *vm.OperandStack) {
+	width, _ := Gfx.GetDimensions()
+	stack.Push(vm.VMDataObject{Type: vm.INTGER, IntData: int64(width)})
+}
+
+func GfxGetHeight(stack *vm.OperandStack) {
+	_, height := Gfx.GetDimensions()
+	stack.Push(vm.VMDataObject{Type: vm.INTGER, IntData: int64(height)})
+}
+
+func GfxSetWindowTitle(stack *vm.OperandStack) {
+	title := stack.Pop().StringData
+	Gfx.SetWindowTitle(title)
+}
+
 func GfxClear(stack *vm.OperandStack) {
 	Gfx.Clear()
 }
@@ -298,4 +334,132 @@ func GfxSaveToFile(stack *vm.OperandStack) {
 
 func GfxFinish() {
 	Gfx.Finish()
+}
+
+func GfxSetLineWidth(stack *vm.OperandStack) {
+	widthObj := stack.Pop()
+	var width float64
+	if widthObj.Type == vm.REAL {
+		width = widthObj.FloatData
+	} else {
+		width = float64(widthObj.IntData)
+	}
+	Gfx.SetLineWidth(width)
+}
+
+func GfxStroke(stack *vm.OperandStack) {
+	Gfx.Stroke()
+}
+
+func GfxFill(stack *vm.OperandStack) {
+	Gfx.Fill()
+}
+
+func GfxPathRectangle(stack *vm.OperandStack) {
+	heightObj := stack.Pop()
+	widthObj := stack.Pop()
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y, width, height int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	if widthObj.Type == vm.REAL {
+		width = int(widthObj.FloatData)
+	} else {
+		width = int(widthObj.IntData)
+	}
+
+	if heightObj.Type == vm.REAL {
+		height = int(heightObj.FloatData)
+	} else {
+		height = int(heightObj.IntData)
+	}
+
+	Gfx.PathRectangle(x, y, width, height)
+}
+
+func GfxPathCircle(stack *vm.OperandStack) {
+	radiusObj := stack.Pop()
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y, radius int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	if radiusObj.Type == vm.REAL {
+		radius = int(radiusObj.FloatData)
+	} else {
+		radius = int(radiusObj.IntData)
+	}
+
+	Gfx.PathCircle(x, y, radius)
+}
+
+func GfxPathMoveTo(stack *vm.OperandStack) {
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	Gfx.PathMoveTo(x, y)
+}
+
+func GfxPathLineTo(stack *vm.OperandStack) {
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y int
+
+	if xObj.Type == vm.REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == vm.REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	Gfx.PathLineTo(x, y)
+}
+
+func GfxPathClose(stack *vm.OperandStack) {
+	Gfx.PathClose()
 }

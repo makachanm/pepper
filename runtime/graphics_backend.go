@@ -96,7 +96,20 @@ func NewGraphics(width, height int, wg *sync.WaitGroup) *PepperGraphics {
 }
 
 func (pg *PepperGraphics) Resize(width, height int) {
-	// TODO: Implement resize
+	pg.Window.SetSize(int32(width), int32(height))
+	sdlSurface, err := pg.Window.GetSurface()
+	if err != nil {
+		panic(err)
+	}
+	cairoSurface := cairo.NewSurfaceFromData(sdlSurface.Data(), cairo.FORMAT_ARGB32, width, height, int(sdlSurface.Pitch))
+	pg.Surface.Finish() // Finish with the old surface
+	pg.Width = width
+	pg.Height = height
+	pg.Surface = cairoSurface
+}
+
+func (pg *PepperGraphics) SetWindowTitle(title string) {
+	pg.Window.SetTitle(title)
 }
 
 func (pg *PepperGraphics) GetDimensions() (int, int) {
@@ -162,4 +175,38 @@ func (pg *PepperGraphics) SaveToFile(filename string) {
 func (pg *PepperGraphics) Finish() {
 	pg.Surface.Flush()
 	pg.Window.UpdateSurface()
+}
+
+// New methods
+
+func (pg *PepperGraphics) SetLineWidth(width float64) {
+	pg.Surface.SetLineWidth(width)
+}
+
+func (pg *PepperGraphics) Stroke() {
+	pg.Surface.Stroke()
+}
+
+func (pg *PepperGraphics) Fill() {
+	pg.Surface.Fill()
+}
+
+func (pg *PepperGraphics) PathRectangle(x, y, width, height int) {
+	pg.Surface.Rectangle(float64(x), float64(y), float64(width), float64(height))
+}
+
+func (pg *PepperGraphics) PathCircle(x, y, radius int) {
+	pg.Surface.Arc(float64(x), float64(y), float64(radius), 0, 2*3.141592)
+}
+
+func (pg *PepperGraphics) PathMoveTo(x, y int) {
+	pg.Surface.MoveTo(float64(x), float64(y))
+}
+
+func (pg *PepperGraphics) PathLineTo(x, y int) {
+	pg.Surface.LineTo(float64(x), float64(y))
+}
+
+func (pg *PepperGraphics) PathClose() {
+	pg.Surface.ClosePath()
 }

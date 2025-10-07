@@ -33,6 +33,33 @@ func doSyscallGfx(vmInstance VM, code int64) {
 
 	case 313: // gfx_wait_event
 		GfxWaitEvent(vmInstance.OperandStack)
+
+	case 314:
+		GfxSetWindowTitle(vmInstance.OperandStack)
+	case 315:
+		GfxResize(vmInstance.OperandStack)
+	case 316:
+		GfxGetWidth(vmInstance.OperandStack)
+	case 317:
+		GfxGetHeight(vmInstance.OperandStack)
+
+	case 318:
+		GfxSetLineWidth(vmInstance.OperandStack)
+	case 319:
+		GfxStroke(vmInstance.OperandStack)
+	case 320:
+		GfxFill(vmInstance.OperandStack)
+	case 321:
+		GfxPathRectangle(vmInstance.OperandStack)
+	case 322:
+		GfxPathCircle(vmInstance.OperandStack)
+	case 323:
+		GfxPathMoveTo(vmInstance.OperandStack)
+	case 324:
+		GfxPathLineTo(vmInstance.OperandStack)
+	case 325:
+		GfxPathClose(vmInstance.OperandStack)
+
 	}
 }
 
@@ -58,6 +85,11 @@ func eventToPack(event Event) vm.VMDataObject {
 }
 
 func GfxWaitEvent(stack *vm.OperandStack) {
+	if EventQueue.IsEmpty() {
+		stack.Push(vm.VMDataObject{Type: vm.NIL})
+		return
+	}
+
 	event := EventQueue.Dequeue()
 	stack.Push(eventToPack(event))
 }

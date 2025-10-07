@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"pepper/vm"
 	"sync"
 )
@@ -25,8 +26,12 @@ func NewVM(input []vm.VMInstr, wg *sync.WaitGroup) *VM {
 	}
 }
 
-func (v *VM) Run() {
+func (v *VM) Run(debugmode bool) {
 	for v.PC < len(v.Program) {
+		if debugmode {
+			fmt.Printf("Currunt PC: %d\n | INSTR: %s\n", v.PC, ResolveVMInstruction(v.Program[v.PC]))
+		}
+
 		if ShouldQuit {
 			return
 		}

@@ -255,6 +255,72 @@ gfx_save_to_file[`output.png`]
 gfx_finish[]
 ```
 
+#### gfx_set_line_width
+`gfx_set_line_width` 함수는 선의 두께를 설정합니다.
+```
+gfx_set_line_width[2.0]
+```
+
+#### gfx_stroke
+`gfx_stroke` 함수는 현재 경로를 따라 선을 그립니다.
+```
+gfx_stroke[]
+```
+
+#### gfx_fill
+`gfx_fill` 함수는 현재 경로의 내부를 채웁니다.
+```
+gfx_fill[]
+```
+
+#### gfx_path_rect
+`gfx_path_rect` 함수는 경로에 사각형을 추가합니다.
+```
+gfx_path_rect[10 10 100 50]
+```
+
+#### gfx_path_circle
+`gfx_path_circle` 함수는 경로에 원을 추가합니다.
+```
+gfx_path_circle[100 100 50]
+```
+
+#### gfx_path_move_to
+`gfx_path_move_to` 함수는 새로운 하위 경로를 시작합니다.
+```
+gfx_path_move_to[10 10]
+```
+
+#### gfx_path_line_to
+`gfx_path_line_to` 함수는 현재 지점에서 지정된 지점까지 선을 추가합니다.
+```
+gfx_path_line_to[100 100]
+```
+
+#### gfx_path_close
+`gfx_path_close` 함수는 현재 하위 경로의 시작점과 끝점을 연결하여 경로를 닫습니다.
+```
+gfx_path_close[]
+```
+
+#### gfx_resize
+`gfx_resize` 함수는 창의 크기를 조절합니다.
+```
+gfx_resize[800 600]
+```
+
+#### gfx_get_dimensions
+`gfx_get_dimensions` 함수는 창의 너비와 높이를 팩으로 반환합니다.
+```
+dim size = gfx_get_dimensions[]
+```
+
+#### gfx_set_window_title
+`gfx_set_window_title` 함수는 창의 제목을 설정합니다.
+```
+gfx_set_window_title[`My Graphics Window`]
+```
+
 ### HTTP
 
 #### http_get

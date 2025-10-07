@@ -3,6 +3,7 @@ package runtime
 type Graphics interface {
 	Resize(width, height int)
 	GetDimensions() (int, int)
+	SetWindowTitle(title string)
 	Clear()
 	SetSourceRGB(r, g, b float64)
 	DrawRect(x, y, width, height int)
@@ -15,4 +16,14 @@ type Graphics interface {
 	DrawText(x, y int, text string)
 	SaveToFile(filename string)
 	Finish()
+
+	// New methods
+	SetLineWidth(width float64)
+	Stroke()
+	Fill()
+	PathRectangle(x, y, width, height int)
+	PathCircle(x, y, radius int)
+	PathMoveTo(x, y int)
+	PathLineTo(x, y int)
+	PathClose()
 }

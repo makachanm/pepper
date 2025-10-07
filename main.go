@@ -37,7 +37,11 @@ func main() {
 
 	var wg sync.WaitGroup
 	vm := runtime.NewVM(comp, &wg)
-	vm.Run()
+	if len(os.Args) == 3 && os.Args[2] == "-d" {
+		vm.Run(true)
+	} else {
+		vm.Run(false)
+	}
 
 	if len(os.Args) == 3 && os.Args[2] == "-d" {
 		fmt.Println("Stack:")

@@ -237,7 +237,7 @@ func (r1 VMDataObject) Operate(r2 VMDataObject, floatOp func(float64, float64) f
 			}
 		}
 	}
-	panic("Unsupported operation")
+	panic("Unsupported operation between types" + strconv.FormatInt(int64(r1.Type), 10) + " and " + strconv.FormatInt(int64(r2.Type), 10))
 }
 
 func (obj *VMDataObject) CastTo(d_type ValueType) VMDataObject {
