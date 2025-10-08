@@ -26,7 +26,7 @@ func main() {
 	p := parser.New(l)
 
 	program := p.ParseProgram()
-	comp := compiler.NewCompiler().Compile(program)
+	comp := compiler.NewCompiler().Compile(program, false)
 
 	if len(os.Args) == 3 && os.Args[2] == "-d" {
 		fmt.Println("Instructions:")

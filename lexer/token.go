@@ -63,6 +63,7 @@ const (
 	REPEAT   TokenType = "REPEAT"
 	BREAK    TokenType = "BREAK"
 	CONTINUE TokenType = "CONTINUE"
+	INCLUDE  TokenType = "INCLUDE"
 )
 
 type Token struct {
@@ -91,6 +92,7 @@ var keywords = map[string]TokenType{
 	"or":       OR,
 	"not":      NOT,
 	"nil":      NIL,
+	"include":  INCLUDE,
 }
 
 var matchingTokens = map[string]TokenType{

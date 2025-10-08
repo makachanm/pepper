@@ -2,6 +2,8 @@ package compiler
 
 import (
 	"fmt"
+	"os"
+	"pepper/lexer"
 	"pepper/parser"
 	"pepper/vm"
 	"reflect"
@@ -27,13 +29,15 @@ func NewCompiler() *Compiler {
 	}
 }
 
-func (c *Compiler) Compile(program *parser.Program) []vm.VMInstr {
-	c.defineStandardFunctions()
-	for name, instrs := range c.standardFunctionMaps {
-		c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpDefFunc, Oprand1: vm.VMDataObject{Type: vm.STRING, StringData: name}})
-		c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpJmp, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(c.instructions)) + 3}})
-		c.instructions = append(c.instructions, instrs...)
-		c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpReturn})
+func (c *Compiler) Compile(program *parser.Program, excludestd bool) []vm.VMInstr {
+	if !excludestd {
+		c.defineStandardFunctions()
+		for name, instrs := range c.standardFunctionMaps {
+			c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpDefFunc, Oprand1: vm.VMDataObject{Type: vm.STRING, StringData: name}})
+			c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpJmp, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(c.instructions)) + 3}})
+			c.instructions = append(c.instructions, instrs...)
+			c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpReturn})
+		}
 	}
 
 	for _, stmt := range program.Statements {
@@ -76,6 +80,25 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 		c.compileBreakStatement()
 	case *parser.ContinueStatement:
 		c.compileContinueStatement()
+
+	case *parser.IncludeStatement:
+		data, err := os.ReadFile(node.Filename)
+		if err != nil {
+			panic(err)
+		}
+		l := lexer.New(string(data))
+		p := parser.New(l)
+		program := p.ParseProgram()
+		if len(p.Errors()) != 0 {
+			for _, msg := range p.Errors() {
+				fmt.Println(msg)
+			}
+			panic("Parser errors")
+		}
+		for _, stmt := range program.Statements {
+			c.compileStmt(stmt, false)
+		}
+
 	default:
 		panic(fmt.Sprintf("Unsupported statement type: %T", stmt))
 	}

@@ -152,3 +152,9 @@ examplepack->fizz = `spam`
 examplepack|`fizz`|
 ```
 이때, 특수 문법으로 접근한 Key는 일종의 독립적인 Variable로 취급된다.
+
+### INCLUDE
+Include는 외부 소스 파일을 추가할때 사용된다. 해당 문법을 통하여 상대 경로에 있는 외부 소스 파일을 추가할 수 있다.
+```
+include `test/test.p`
+```

@@ -161,6 +161,7 @@ func (v *VM) Run(debugmode bool) {
 			val := v.OperandStack.Pop()
 			v.OperandStack.Push(val.CastTo(vm.STRING))
 		case vm.OpHlt:
+			ShouldQuit = true
 			return
 		case vm.OpIndex:
 			index := v.OperandStack.Pop()

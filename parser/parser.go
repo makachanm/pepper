@@ -152,9 +152,27 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseBreakStatement()
 	case lexer.CONTINUE:
 		return p.parseContinueStatement()
+	case lexer.INCLUDE:
+		return p.parseIncludeStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
+}
+
+func (p *Parser) parseIncludeStatement() *IncludeStatement {
+	stmt := &IncludeStatement{Token: p.curToken}
+
+	if !p.expectPeek(lexer.STRING) {
+		return nil
+	}
+
+	stmt.Filename = p.curToken.Literal
+
+	if !p.expectPeek(lexer.NEWLINE) {
+		p.nextToken()
+	}
+
+	return stmt
 }
 
 func (p *Parser) parseBreakStatement() *BreakStatement {

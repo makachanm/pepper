@@ -45,10 +45,10 @@ func (ls *LetStatement) statementNode()       {}
 func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
 
 type DimStatement struct {
-	Token lexer.Token // the lexer.DIM token
-	Name  *Identifier
+	Token       lexer.Token // the lexer.DIM token
+	Name        *Identifier
 	AssignToken lexer.Token // the = token
-	Value Expression
+	Value       Expression
 }
 
 func (ds *DimStatement) statementNode()       {}
@@ -248,3 +248,11 @@ type MemberAccessExpression struct {
 
 func (mae *MemberAccessExpression) expressionNode()      {}
 func (mae *MemberAccessExpression) TokenLiteral() string { return mae.Token.Literal }
+
+type IncludeStatement struct {
+	Token    lexer.Token // The 'include' token
+	Filename string
+}
+
+func (is *IncludeStatement) statementNode()       {}
+func (is *IncludeStatement) TokenLiteral() string { return is.Token.Literal }

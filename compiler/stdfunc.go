@@ -4,6 +4,8 @@ import "pepper/vm"
 
 func (c *Compiler) defineStandardFunctions() {
 	c.standardFunctionMaps = map[string][]vm.VMInstr{
+		"quit": {vm.VMInstr{Op: vm.OpHlt, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
+
 		// IO
 		"print":      {vm.VMInstr{Op: vm.OpSyscall, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
 		"println":    {vm.VMInstr{Op: vm.OpSyscall, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 1}}},

@@ -54,3 +54,5 @@ println[parts|2|]
 dim p = [ 0: `one`, 1: `two`, 2: `three` ]
 dim joined_str = str_join[p ` - `]
 println[`Joining a pack with ' - ': ` + joined_str]
+
+quit[]
