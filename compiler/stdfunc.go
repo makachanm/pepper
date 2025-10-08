@@ -6,6 +6,10 @@ func (c *Compiler) defineStandardFunctions() {
 	c.standardFunctionMaps = map[string][]vm.VMInstr{
 		"quit": {vm.VMInstr{Op: vm.OpHlt, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
 
+		"to_int":  {vm.VMInstr{Op: vm.OpCstInt, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
+		"to_real": {vm.VMInstr{Op: vm.OpCstReal, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
+		"to_str":  {vm.VMInstr{Op: vm.OpCstStr, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
+
 		// IO
 		"print":      {vm.VMInstr{Op: vm.OpSyscall, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 0}}},
 		"println":    {vm.VMInstr{Op: vm.OpSyscall, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: 1}}},
