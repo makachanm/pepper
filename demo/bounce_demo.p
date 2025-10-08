@@ -16,6 +16,8 @@ dim gravity = 0.5
 dim bounce = 1.0 /* 튕김 계수 (1.0 = 완전탄성) */
 dim friction = 0.995 /* 바닥에서 수평 감쇠 */
 
+gfx_set_window_title[`Bouncing Ball`]
+
 loop [true] then
   /* 배경 지우기 */
   gfx_set_source_rgb[0 0 0]

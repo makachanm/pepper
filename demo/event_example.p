@@ -23,6 +23,8 @@ func draw_eye [eye_cx eye_cy eye_r pupil_r mouse_x mouse_y] then
   
 end
 
+gfx_set_window_title[`Eyes Demo`]
+
 loop [true] then
     dim event = gfx_wait_event[]
     dim event_type = event->type

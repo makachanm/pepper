@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"pepper/compiler"
 	"pepper/lexer"
@@ -33,7 +32,7 @@ func main() {
 	}
 
 	filePath := flag.Arg(0)
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}

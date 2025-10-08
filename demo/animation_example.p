@@ -9,6 +9,8 @@ dim w = 50
 dim h = 50
 dim dx = 5 /* speed and direction */
 
+gfx_set_window_title[`Bouncing Rectangle`]
+
 loop [true] then
   /* Clear screen to black */
   gfx_set_source_rgb[0 0 0]
