@@ -100,13 +100,13 @@ loop [true] then
   dim e = gfx_wait_event[]
   if [ e->type == `mouse_motion` ] then
     /* center paddle on mouse x */
-    paddle_x = e->x - PADDLE_W / 2
+    paddle_x = e->x - (PADDLE_W / 2)
     /* clamp */
     paddle_x = clamp[paddle_x 0 SCREEN_W - PADDLE_W]
     /* if ball not launched, follow paddle */
     if [ not ball_launched ] then
-      ball_x = paddle_x + PADDLE_W / 2
-      ball_y = paddle_y - ball_r - 2
+      ball_x = paddle_x + (PADDLE_W / 2)
+      ball_y = paddle_y - (ball_r - 2)
     end
   end
 
@@ -115,7 +115,7 @@ loop [true] then
     if [ not ball_launched ] then
       ball_launched = true
       /* slight randomization: flip vx direction if click on left/right */
-      if [ e->x < paddle_x + PADDLE_W / 2 ] then
+      if [ e->x < paddle_x + (PADDLE_W / 2) ] then
         ball_vx = -abs[ball_vx]
       else then
         ball_vx = abs[ball_vx]
@@ -164,7 +164,7 @@ loop [true] then
       /* reflect Y */
       ball_vy = 0 - abs[ball_vy]
       /* change X based on hit position */
-      dim hit_pos = (ball_x - (paddle_x + PADDLE_W / 2)) / (PADDLE_W / 2) /* -1..1 */
+      dim hit_pos = ((ball_x - (paddle_x + PADDLE_W / 2)) / (PADDLE_W / 2)) /* -1..1 */
       ball_vx = ball_vx + hit_pos * 3
       /* clamp vx so it's not zero */
       if [ abs[ball_vx] < 1 ] then
