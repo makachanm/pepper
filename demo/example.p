@@ -37,7 +37,6 @@ else
 end
 
 /* Save the result */
-gfx_save_to_file[`demo.png`]
 
 /* Finish execution */
 gfx_finish[]

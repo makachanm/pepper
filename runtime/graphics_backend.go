@@ -8,11 +8,13 @@ import (
 )
 
 type PepperGraphics struct {
-	Width   int
-	Height  int
-	Window  *sdl.Window
-	Surface *cairo.Surface
-	wg      *sync.WaitGroup
+	Width        int
+	Height       int
+	Window       *sdl.Window
+	Surface      *cairo.Surface
+	wg           *sync.WaitGroup
+	sprites      map[int]*Sprite
+	nextSpriteID int
 }
 
 func NewGraphics(width, height int, wg *sync.WaitGroup) *PepperGraphics {
@@ -34,11 +36,13 @@ func NewGraphics(width, height int, wg *sync.WaitGroup) *PepperGraphics {
 	cairoSurface := cairo.NewSurfaceFromData(sdlSurface.Data(), cairo.FORMAT_ARGB32, width, height, int(sdlSurface.Pitch))
 
 	pg := &PepperGraphics{
-		Width:   width,
-		Height:  height,
-		Window:  window,
-		Surface: cairoSurface,
-		wg:      wg,
+		Width:        width,
+		Height:       height,
+		Window:       window,
+		Surface:      cairoSurface,
+		wg:           wg,
+		sprites:      make(map[int]*Sprite),
+		nextSpriteID: 0,
 	}
 
 	// Start the event loop in a separate goroutine
@@ -209,4 +213,84 @@ func (pg *PepperGraphics) PathLineTo(x, y int) {
 
 func (pg *PepperGraphics) PathClose() {
 	pg.Surface.ClosePath()
+}
+
+// Sprite methods
+
+func (pg *PepperGraphics) LoadSprite(filename string) (int, error) {
+	surface, err := cairo.NewSurfaceFromPNG(filename)
+	if err == cairo.STATUS_FILE_NOT_FOUND {
+		panic(filename + " file cannot be loaded!")
+	}
+
+	id := pg.nextSpriteID
+	pg.nextSpriteID++
+
+	pg.sprites[id] = &Sprite{
+		Surface:  surface,
+		Visible:  true,
+		Rotation: 0,
+		ScaleX:   1.0,
+		ScaleY:   1.0,
+	}
+
+	return id, nil
+}
+
+func (pg *PepperGraphics) CreateSprite(width, height int) int {
+	surface := cairo.NewSurface(cairo.FORMAT_ARGB32, width, height)
+
+	id := pg.nextSpriteID
+	pg.nextSpriteID++
+
+	pg.sprites[id] = &Sprite{
+		Surface:  surface,
+		Visible:  true,
+		Rotation: 0,
+		ScaleX:   1.0,
+		ScaleY:   1.0,
+	}
+
+	return id
+}
+
+func (pg *PepperGraphics) DestroySprite(id int) {
+	sprite, ok := pg.sprites[id]
+	if !ok {
+		return
+	}
+	sprite.Surface.Finish()
+	delete(pg.sprites, id)
+}
+
+func (pg *PepperGraphics) DrawSprite(id, x, y int) {
+	sprite, ok := pg.sprites[id]
+	if !ok || !sprite.Visible {
+		return
+	}
+
+	pg.Surface.Save()
+	pg.Surface.Translate(float64(x), float64(y))
+	pg.Surface.Rotate(sprite.Rotation * 3.141592 / 180)
+	pg.Surface.Scale(sprite.ScaleX, sprite.ScaleY)
+	pg.Surface.SetSourceSurface(sprite.Surface, 0, 0)
+	pg.Surface.Paint()
+	pg.Surface.Restore()
+}
+
+func (pg *PepperGraphics) SetSpriteRotation(id int, angle float64) {
+	sprite, ok := pg.sprites[id]
+	if !ok {
+		return
+	}
+	sprite.Rotation = angle
+}
+
+func (pg *PepperGraphics) SetSpriteScale(id int, sx, sy float64) {
+	sprite, ok := pg.sprites[id]
+	if !ok {
+		return
+	}
+	sprite.ScaleX = sx
+	sprite.ScaleY = sy
 }

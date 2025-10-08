@@ -77,6 +77,13 @@ func (c *Compiler) defineStandardFunctions() {
 		"gfx_path_line_to":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 324}}},
 		"gfx_path_close":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 325}}},
 
+		"gfx_load_sprite":          {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 326}}},
+		"gfx_create_sprite":        {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 327}}},
+		"gfx_destroy_sprite":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 328}}},
+		"gfx_draw_sprite":          {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 329}}},
+		"gfx_set_sprite_rotation":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 330}}},
+		"gfx_set_sprite_scale":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 331}}},
+
 		// HTTP
 		"http_get":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 400}}},
 		"http_post":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: 401}}},

@@ -26,4 +26,10 @@ type Graphics interface {
 	PathMoveTo(x, y int)
 	PathLineTo(x, y int)
 	PathClose()
+	LoadSprite(path string) (int, error)
+	CreateSprite(width, height int) int
+	DestroySprite(spriteID int)
+	DrawSprite(spriteID int, x, y int)
+	SetSpriteRotation(spriteID int, angle float64)
+	SetSpriteScale(spriteID int, scaleX, scaleY float64)
 }

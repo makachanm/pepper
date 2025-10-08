@@ -462,3 +462,126 @@ func GfxPathLineTo(stack *OperandStack) {
 func GfxPathClose(stack *OperandStack) {
 	Gfx.PathClose()
 }
+
+func GfxLoadSprite(stack *OperandStack) {
+	filename := stack.Pop().StringData
+	id, err := Gfx.LoadSprite(filename)
+	if err != nil {
+		// How to handle errors? For now, push -1
+		stack.Push(VMDataObject{Type: INTGER, IntData: -1})
+		return
+	}
+	stack.Push(VMDataObject{Type: INTGER, IntData: int64(id)})
+}
+
+func GfxCreateSprite(stack *OperandStack) {
+	heightObj := stack.Pop()
+	widthObj := stack.Pop()
+
+	var width, height int
+
+	if widthObj.Type == REAL {
+		width = int(widthObj.FloatData)
+	} else {
+		width = int(widthObj.IntData)
+	}
+
+	if heightObj.Type == REAL {
+		height = int(heightObj.FloatData)
+	} else {
+		height = int(heightObj.IntData)
+	}
+
+	id := Gfx.CreateSprite(width, height)
+	stack.Push(VMDataObject{Type: INTGER, IntData: int64(id)})
+}
+
+func GfxDestroySprite(stack *OperandStack) {
+	idObj := stack.Pop()
+	var id int
+	if idObj.Type == REAL {
+		id = int(idObj.FloatData)
+	} else {
+		id = int(idObj.IntData)
+	}
+	Gfx.DestroySprite(id)
+}
+
+func GfxDrawSprite(stack *OperandStack) {
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+	idObj := stack.Pop()
+
+	var x, y, id int
+
+	if idObj.Type == REAL {
+		id = int(idObj.FloatData)
+	} else {
+		id = int(idObj.IntData)
+	}
+
+	if xObj.Type == REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	Gfx.DrawSprite(id, x, y)
+}
+
+func GfxSetSpriteRotation(stack *OperandStack) {
+	angleObj := stack.Pop()
+	idObj := stack.Pop()
+
+	var id int
+	var angle float64
+
+	if idObj.Type == REAL {
+		id = int(idObj.FloatData)
+	} else {
+		id = int(idObj.IntData)
+	}
+
+	if angleObj.Type == REAL {
+		angle = angleObj.FloatData
+	} else {
+		angle = float64(angleObj.IntData)
+	}
+
+	Gfx.SetSpriteRotation(id, angle)
+}
+
+func GfxSetSpriteScale(stack *OperandStack) {
+	syObj := stack.Pop()
+	sxObj := stack.Pop()
+	idObj := stack.Pop()
+
+	var id int
+	var sx, sy float64
+
+	if idObj.Type == REAL {
+		id = int(idObj.FloatData)
+	} else {
+		id = int(idObj.IntData)
+	}
+
+	if sxObj.Type == REAL {
+		sx = sxObj.FloatData
+	} else {
+		sx = float64(sxObj.IntData)
+	}
+
+	if syObj.Type == REAL {
+		sy = syObj.FloatData
+	} else {
+		sy = float64(syObj.IntData)
+	}
+
+	Gfx.SetSpriteScale(id, sx, sy)
+}

@@ -55,7 +55,18 @@ func doSyscallGfx(vmInstance VM, code int64) {
 		GfxPathLineTo(vmInstance.OperandStack)
 	case 325:
 		GfxPathClose(vmInstance.OperandStack)
-
+	case 326:
+		GfxLoadSprite(vmInstance.OperandStack)
+	case 327:
+		GfxCreateSprite(vmInstance.OperandStack)
+	case 328:
+		GfxDestroySprite(vmInstance.OperandStack)
+	case 329:
+		GfxDrawSprite(vmInstance.OperandStack)
+	case 330:
+		GfxSetSpriteRotation(vmInstance.OperandStack)
+	case 331:
+		GfxSetSpriteScale(vmInstance.OperandStack)
 	}
 }
 
