@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,13 +12,28 @@ import (
 	"sync"
 )
 
+const version = "0.1.0"
+
 func main() {
-	if len(os.Args) == 3 && os.Args[2] != "-d" {
-		fmt.Println("Usage: pepper <file> [-d for debug]")
+	var debug bool
+	var showVersion bool
+
+	flag.BoolVar(&debug, "d", false, "enable debug mode")
+	flag.BoolVar(&showVersion, "v", false, "show version information")
+	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("Pepper v%s\n", version)
 		return
 	}
 
-	data, err := ioutil.ReadFile(os.Args[1])
+	if len(flag.Args()) != 1 {
+		fmt.Println("Usage: pepper [-d] [-v] <file>")
+		os.Exit(1)
+	}
+
+	filePath := flag.Arg(0)
+	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +44,7 @@ func main() {
 	program := p.ParseProgram()
 	comp := compiler.NewCompiler().Compile(program, false)
 
-	if len(os.Args) == 3 && os.Args[2] == "-d" {
+	if debug {
 		fmt.Println("Instructions:")
 		for i, instr := range comp {
 			fmt.Printf("%04d %s\n", i, runtime.ResolveVMInstruction(instr))
@@ -37,13 +53,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	vm := runtime.NewVM(comp, &wg)
-	if len(os.Args) == 3 && os.Args[2] == "-d" {
-		vm.Run(true)
-	} else {
-		vm.Run(false)
-	}
+	vm.Run(debug)
 
-	if len(os.Args) == 3 && os.Args[2] == "-d" {
+	if debug {
 		fmt.Println("Stack:")
 		runtime.DumpOperandStack(vm)
 		fmt.Println("Memory:")
