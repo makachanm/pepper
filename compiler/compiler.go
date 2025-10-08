@@ -114,6 +114,7 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 	switch node := stmt.(type) {
 	case *parser.ExpressionStatement:
 		c.compileExpr(node.Expression)
+
 	case *parser.LetStatement:
 		c.compileLetStatement(node)
 	case *parser.DimStatement:

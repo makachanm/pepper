@@ -98,6 +98,7 @@ loop [true] then
 
   /* input / events */
   dim e = gfx_wait_event[]
+
   if [ e->type == `mouse_motion` ] then
     /* center paddle on mouse x */
     paddle_x = e->x - (PADDLE_W / 2)
@@ -275,5 +276,5 @@ loop [true] then
     ball_launched = false
   end
 
-  sleep[16] /* ~60fps */
+  sleep[100] /* ~60fps */
 end

@@ -42,12 +42,6 @@ func (q *eventQueue) Enqueue(e Event) {
 	q.events <- e
 }
 
-// Dequeue removes and returns the first event from the queue.
-// It blocks if the queue is empty.
-func (q *eventQueue) Dequeue() Event {
-	return <-q.events
-}
-
 // DequeueNonBlocking tries to dequeue an event without blocking.
 // It returns the event and true if successful, or a zero-value event and false if the queue is empty.
 func (q *eventQueue) DequeueNonBlocking() (Event, bool) {
