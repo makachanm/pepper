@@ -314,6 +314,8 @@ const (
 	OpPop
 	OpStoreGlobal
 	OpLoadGlobal
+	OpStoreLocal
+	OpLoadLocal
 	OpDefFunc
 	OpCall
 	OpReturn

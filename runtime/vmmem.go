@@ -1,18 +1,23 @@
 package runtime
 
+type CallStackObject struct {
+	PC   int
+	Name string
+}
+
 type CallStack struct {
-	stack []int
+	stack []CallStackObject
 }
 
 func NewCallStack() *CallStack {
-	return &CallStack{stack: make([]int, 0)}
+	return &CallStack{stack: make([]CallStackObject, 0)}
 }
 
-func (cs *CallStack) Push(pc int) {
+func (cs *CallStack) Push(pc CallStackObject) {
 	cs.stack = append(cs.stack, pc)
 }
 
-func (cs *CallStack) Pop() int {
+func (cs *CallStack) Pop() CallStackObject {
 	if len(cs.stack) == 0 {
 		panic("CallStack underflow")
 	}
@@ -25,7 +30,7 @@ func (cs *CallStack) IsEmpty() bool {
 	return len(cs.stack) == 0
 }
 
-func (cs *CallStack) GetStack() []int {
+func (cs *CallStack) GetStack() []CallStackObject {
 	return cs.stack
 }
 
@@ -61,8 +66,13 @@ func (s *OperandStack) GetStack() []VMDataObject {
 	return s.stack
 }
 
+type VMDataObjKey struct {
+	Name     string
+	ScopeKey string
+}
+
 type VMMEMObjectTable struct {
-	DataTable      map[string]int
+	DataTable      map[VMDataObjKey]int
 	FunctionTable  map[string]int
 	ArrayTable     map[string][]VMDataObject
 	DataMemory     []VMDataObject
@@ -74,7 +84,7 @@ type VMMEMObjectTable struct {
 
 func NewVMMEMObjTable() VMMEMObjectTable {
 	return VMMEMObjectTable{
-		DataTable:      make(map[string]int),
+		DataTable:      make(map[VMDataObjKey]int),
 		FunctionTable:  make(map[string]int),
 		ArrayTable:     make(map[string][]VMDataObject),
 		DataMemory:     make([]VMDataObject, 0),
@@ -85,35 +95,35 @@ func NewVMMEMObjTable() VMMEMObjectTable {
 	}
 }
 
-func (v *VMMEMObjectTable) MakeObj(name string) {
+func (v *VMMEMObjectTable) MakeObj(name string, scopeKey string) {
+	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
 	v.DataMemory = append(v.DataMemory, VMDataObject{})
-	v.DataTable[name] = v.currunt_free_dm_pointer
-
+	v.DataTable[key] = v.currunt_free_dm_pointer
 	v.currunt_free_dm_pointer++
 }
 
-func (v *VMMEMObjectTable) GetObj(name string) *VMDataObject {
-	idx, ok := v.DataTable[name]
+func (v *VMMEMObjectTable) GetObj(name string, scopeKey string) *VMDataObject {
+	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+	idx, ok := v.DataTable[key]
 	if !ok {
 		panic("VMDataObject not found: " + name)
 	}
 	return &v.DataMemory[idx]
 }
 
-func (v *VMMEMObjectTable) SetObj(name string, data VMDataObject) {
-	idx, ok := v.DataTable[name]
+func (v *VMMEMObjectTable) SetObj(name string, data VMDataObject, scopeKey string) {
+	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+	idx, ok := v.DataTable[key]
 	if !ok {
 		panic("VMDataObject not found: " + name)
 	}
 	v.DataMemory[idx] = data
 }
 
-func (v *VMMEMObjectTable) HasObj(name string) bool {
-	idx, ok := v.DataTable[name]
-	if !ok || idx >= len(v.DataMemory) {
-		return false
-	}
-	return true
+func (v *VMMEMObjectTable) HasObj(name string, scopeKey string) bool {
+	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+	_, ok := v.DataTable[key]
+	return ok
 }
 
 func (v *VMMEMObjectTable) MakeFunc(name string) {

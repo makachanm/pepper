@@ -9,8 +9,57 @@ import (
 	"reflect"
 )
 
-// LoopContext holds information about a loop being compiled,
-// used to handle break and continue statements.
+type SymbolScope string
+
+const (
+	GlobalScope SymbolScope = "GLOBAL"
+	LocalScope  SymbolScope = "LOCAL"
+)
+
+type Symbol struct {
+	Name  string
+	Scope SymbolScope
+	Index int
+}
+
+type SymbolTable struct {
+	store          map[string]Symbol
+	numDefinitions int
+	Outer          *SymbolTable
+}
+
+func NewSymbolTable() *SymbolTable {
+	s := make(map[string]Symbol)
+	return &SymbolTable{store: s}
+}
+
+func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
+	s := NewSymbolTable()
+	s.Outer = outer
+	return s
+}
+
+func (s *SymbolTable) Define(name string) Symbol {
+	symbol := Symbol{Name: name, Index: s.numDefinitions}
+	if s.Outer == nil {
+		symbol.Scope = GlobalScope
+	} else {
+		symbol.Scope = LocalScope
+	}
+	s.store[name] = symbol
+	s.numDefinitions++
+	return symbol
+}
+
+func (s *SymbolTable) Resolve(name string) (Symbol, bool) {
+	obj, ok := s.store[name]
+	if !ok && s.Outer != nil {
+		obj, ok = s.Outer.Resolve(name)
+		return obj, ok
+	}
+	return obj, ok
+}
+
 type LoopContext struct {
 	startPos     int
 	breakPatches []int
@@ -20,13 +69,24 @@ type Compiler struct {
 	instructions         []runtime.VMInstr
 	loopContexts         []*LoopContext
 	standardFunctionMaps map[string][]runtime.VMInstr
+	symbolTable          *SymbolTable
 }
 
 func NewCompiler() *Compiler {
+	symbolTable := NewSymbolTable()
 	return &Compiler{
 		loopContexts:         make([]*LoopContext, 0),
 		standardFunctionMaps: make(map[string][]runtime.VMInstr),
+		symbolTable:          symbolTable,
 	}
+}
+
+func (c *Compiler) enterScope() {
+	c.symbolTable = NewEnclosedSymbolTable(c.symbolTable)
+}
+
+func (c *Compiler) leaveScope() {
+	c.symbolTable = c.symbolTable.Outer
 }
 
 func (c *Compiler) Compile(program *parser.Program, excludestd bool) []runtime.VMInstr {
@@ -135,11 +195,16 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.NilLiteral:
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Nil
 	case *parser.Identifier:
-		if node.Value == "" {
-			panic("compiling empty identifier")
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			panic(fmt.Sprintf("undefined variable: %s", node.Value))
 		}
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Value})
-		c.emit(runtime.OpLoadGlobal)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+		if symbol.Scope == GlobalScope {
+			c.emit(runtime.OpLoadGlobal)
+		} else {
+			c.emit(runtime.OpLoadLocal)
+		}
 	case *parser.PackLiteral:
 		c.compilePackLiteral(node)
 	default:
@@ -161,8 +226,13 @@ func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 
 func (c *Compiler) compileLetStatement(node *parser.LetStatement) {
 	c.compileExpr(node.Value)
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
-	c.emit(runtime.OpStoreGlobal)
+	symbol := c.symbolTable.Define(node.Name.Value)
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+	if symbol.Scope == GlobalScope {
+		c.emit(runtime.OpStoreGlobal)
+	} else {
+		c.emit(runtime.OpStoreLocal)
+	}
 }
 
 func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
@@ -171,8 +241,13 @@ func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
 	} else {
 		c.compileExpr(node.Value)
 	}
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
-	c.emit(runtime.OpStoreGlobal)
+	symbol := c.symbolTable.Define(node.Name.Value)
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+	if symbol.Scope == GlobalScope {
+		c.emit(runtime.OpStoreGlobal)
+	} else {
+		c.emit(runtime.OpStoreLocal)
+	}
 }
 
 func (c *Compiler) compileInfixExpr(node *parser.InfixExpression) {
@@ -226,57 +301,46 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 
 func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 	c.compileExpr(node.Condition)
-	// Emit a jump instruction that will be patched later.
 	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
 
-	// Compile the consequence block. It's an expression, so the last statement's
-	// value should be left on the stack.
 	if len(node.Consequence.Statements) == 0 {
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
 	} else {
 		c.compileStmt(node.Consequence, true)
 	}
 
-	// Emit a jump to skip the alternative block.
 	jmpPos := c.emitWithPlaceholder(runtime.OpJmp)
-
-	// Patch the first jump to point to the start of the alternative.
 	c.patchJump(jmpIfFalsePos)
 
-	// Compile the alternative block.
 	if node.Alternative == nil {
-		// If there's no `else` block, the expression evaluates to nil.
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
 	} else {
 		c.compileStmt(node.Alternative, true)
 	}
 
-	// Patch the second jump to point to the end of the if-expression.
 	c.patchJump(jmpPos)
 }
 
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 	c.emit(runtime.OpDefFunc, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
-
-	// Emit a jump to skip the function body during initial execution
 	jumpPos := c.emitWithPlaceholder(runtime.OpJmp)
 
-	// Parameters are handled at the beginning of the function body execution.
-	// The arguments are pushed onto the stack by the caller.
-	// We iterate in reverse to assign them correctly.
+	c.enterScope()
+
 	for i := len(node.Parameters) - 1; i >= 0; i-- {
 		pname := node.Parameters[i]
+		c.symbolTable.Define(pname.Value)
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: pname.Value})
-		c.emit(runtime.OpStoreGlobal)
+		c.emit(runtime.OpStoreLocal)
 	}
 
 	c.compileStmt(node.Body, true)
 	if len(node.Body.Statements) == 0 || !isReturnStatement(node.Body.Statements[len(node.Body.Statements)-1]) {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Push nil
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
 		c.emit(runtime.OpReturn)
 	}
 
-	// Patch the jump to the instruction after the function body.
+	c.leaveScope()
 	c.patchJump(jumpPos)
 }
 
@@ -297,33 +361,53 @@ func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
 func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression) {
 	if ident, ok := node.Left.(*parser.Identifier); ok {
 		c.compileExpr(node.Value)
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
-		c.emit(runtime.OpStoreGlobal)
-	} else if indexExpr, ok := node.Left.(*parser.IndexExpression); ok {
-		c.compileExpr(indexExpr.Left)  // pack
-		c.compileExpr(indexExpr.Index) // index
-		c.compileExpr(node.Value)      // value
-		c.emit(runtime.OpSetIndex)     // returns modified pack
-
-		if ident, ok := indexExpr.Left.(*parser.Identifier); ok {
-			// The modified pack is on the stack. Now push the name and store.
-			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
+		symbol, ok := c.symbolTable.Resolve(ident.Value)
+		if !ok {
+			panic(fmt.Sprintf("undefined variable: %s", ident.Value))
+		}
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+		if symbol.Scope == GlobalScope {
 			c.emit(runtime.OpStoreGlobal)
 		} else {
-			// The pack was a result of an expression, can't store it back.
-			// Pop the modified pack from the stack as it's not used.
+			c.emit(runtime.OpStoreLocal)
+		}
+	} else if indexExpr, ok := node.Left.(*parser.IndexExpression); ok {
+		c.compileExpr(indexExpr.Left)
+		c.compileExpr(indexExpr.Index)
+		c.compileExpr(node.Value)
+		c.emit(runtime.OpSetIndex)
+
+		if ident, ok := indexExpr.Left.(*parser.Identifier); ok {
+			symbol, ok := c.symbolTable.Resolve(ident.Value)
+			if !ok {
+				panic(fmt.Sprintf("undefined variable: %s", ident.Value))
+			}
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+			if symbol.Scope == GlobalScope {
+				c.emit(runtime.OpStoreGlobal)
+			} else {
+				c.emit(runtime.OpStoreLocal)
+			}
+		} else {
 			c.emit(runtime.OpPop)
 		}
 	} else if memberAccessExpr, ok := node.Left.(*parser.MemberAccessExpression); ok {
-		c.compileExpr(memberAccessExpr.Object)                                                                        // pack
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: memberAccessExpr.Member.Value}) // index
-		c.compileExpr(node.Value)                                                                                     // value
-		c.emit(runtime.OpSetIndex)                                                                                    // returns modified pack
+		c.compileExpr(memberAccessExpr.Object)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: memberAccessExpr.Member.Value})
+		c.compileExpr(node.Value)
+		c.emit(runtime.OpSetIndex)
 
 		if ident, ok := memberAccessExpr.Object.(*parser.Identifier); ok {
-			// The modified pack is on the stack. Now push the name and store.
-			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
-			c.emit(runtime.OpStoreGlobal)
+			symbol, ok := c.symbolTable.Resolve(ident.Value)
+			if !ok {
+				panic(fmt.Sprintf("undefined variable: %s", ident.Value))
+			}
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+			if symbol.Scope == GlobalScope {
+				c.emit(runtime.OpStoreGlobal)
+			} else {
+				c.emit(runtime.OpStoreLocal)
+			}
 		} else {
 			c.emit(runtime.OpPop)
 		}
@@ -385,7 +469,6 @@ func (c *Compiler) compileContinueStatement() {
 }
 
 func (c *Compiler) compilePackLiteral(node *parser.PackLiteral) {
-	//c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(len(node.Pairs))})
 	c.emit(runtime.OpMakePack)
 
 	for key, value := range node.Pairs {
@@ -406,8 +489,6 @@ func (c *Compiler) compileMemberAccessExpression(node *parser.MemberAccessExpres
 	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Member.Value})
 	c.emit(runtime.OpIndex)
 }
-
-// --- Helper methods ---
 
 func (c *Compiler) emit(op runtime.VMOp, operands ...runtime.VMDataObject) {
 	instr := runtime.VMInstr{Op: op}

@@ -11,15 +11,14 @@ type VM struct {
 	Program      []VMInstr
 	PC           int
 
-	isFunctionCallState         bool
-	curruntFunctionName         string
-	functionUsedMemoryVariables map[string][]string
-	callDepth                   int
+	curruntFunctionName string
+	callDepth           int
 }
 
 func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 	mem := NewVMMEMObjTable()
 	GfxNew(640, 480, wg) // Initialize graphics context
+
 	return &VM{
 		CallStack:    NewCallStack(),
 		OperandStack: NewOperandStack(),
@@ -27,10 +26,8 @@ func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 		Program:      input,
 		PC:           0,
 
-		isFunctionCallState:         false,
-		curruntFunctionName:         "",
-		functionUsedMemoryVariables: make(map[string][]string),
-		callDepth:                   0,
+		curruntFunctionName: "",
+		callDepth:           0,
 	}
 }
 
@@ -49,50 +46,54 @@ func (v *VM) Run(debugmode bool) {
 		case OpStoreGlobal:
 			name := v.OperandStack.Pop().StringData
 			val := v.OperandStack.Pop()
-			if !v.Memory.HasObj(name) {
-				v.Memory.MakeObj(name)
+			if !v.Memory.HasObj(name, "") {
+				v.Memory.MakeObj(name, "")
 			}
-			v.Memory.SetObj(name, val)
-			if v.isFunctionCallState {
-				v.functionUsedMemoryVariables[v.curruntFunctionName] = append(v.functionUsedMemoryVariables[v.curruntFunctionName], name)
-			}
+			v.Memory.SetObj(name, val, "")
 		case OpLoadGlobal:
 			name := v.OperandStack.Pop().StringData
-			val := v.Memory.GetObj(name)
+			val := v.Memory.GetObj(name, "")
+			v.OperandStack.Push(*val)
+		case OpStoreLocal:
+			name := v.OperandStack.Pop().StringData
+			val := v.OperandStack.Pop()
+			if !v.Memory.HasObj(name, v.curruntFunctionName) {
+				v.Memory.MakeObj(name, v.curruntFunctionName)
+			}
+			v.Memory.SetObj(name, val, v.curruntFunctionName)
+		case OpLoadLocal:
+			name := v.OperandStack.Pop().StringData
+			val := v.Memory.GetObj(name, v.curruntFunctionName)
 			v.OperandStack.Push(*val)
 		case OpDefFunc:
-			// The compiler now emits an OpJmp instruction right after OpDefFunc
-			// to skip the function body during the initial pass. The VM will
-			// just execute that jump.
-			// The JumpPc for the function call needs to point to the instruction
-			// right after the OpJmp, which is at PC + 2.
 			funcName := instr.Oprand1.StringData
 			funcObj := VMFunctionObject{
-				JumpPc: v.PC + 2, // PC is at OpDefFunc, +1 is OpJmp, +2 is start of body
+				JumpPc: v.PC + 2,
 			}
 			v.Memory.MakeFunc(funcName)
 			v.Memory.SetFunc(funcName, funcObj)
-
-			// The VM's main loop will increment PC, and the OpJmp will be executed,
-			// so no manual skipping is needed here.
 		case OpCall:
 			funcName := v.OperandStack.Pop().StringData
 			function := v.Memory.GetFunc(funcName)
 
-			v.CallStack.Push(v.PC)
-			v.PC = function.JumpPc - 1
+			v.CallStack.Push(CallStackObject{PC: v.PC, Name: v.curruntFunctionName})
+			v.PC = function.JumpPc
 			v.callDepth++
-			v.isFunctionCallState = true
 			v.curruntFunctionName = funcName
+			continue
+
 		case OpReturn:
 			if v.CallStack.IsEmpty() {
 				return // Or handle error
 			}
-			v.PC = v.CallStack.Pop()
+			calldata := v.CallStack.Pop()
+
 			PurgeVMMEM(v.Memory, v)
-			v.isFunctionCallState = false
-			v.curruntFunctionName = ""
+
+			v.PC = calldata.PC
+			v.curruntFunctionName = calldata.Name
 			v.callDepth--
+
 		case OpSyscall:
 			doSyscall(*v, instr.Oprand1.IntData)
 		case OpAdd:
