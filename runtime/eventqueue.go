@@ -48,6 +48,17 @@ func (q *eventQueue) Dequeue() Event {
 	return <-q.events
 }
 
+// DequeueNonBlocking tries to dequeue an event without blocking.
+// It returns the event and true if successful, or a zero-value event and false if the queue is empty.
+func (q *eventQueue) DequeueNonBlocking() (Event, bool) {
+	select {
+	case event := <-q.events:
+		return event, true
+	default:
+		return Event{}, false
+	}
+}
+
 func (q *eventQueue) IsEmpty() bool {
 	return len(q.events) == 0
 }

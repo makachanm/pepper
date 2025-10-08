@@ -1,66 +1,73 @@
 package runtime
 
 import (
-	"fmt"
-	"pepper/vm"
 	"sync"
 )
 
 type VM struct {
-	CallStack    *vm.CallStack
-	OperandStack *vm.OperandStack
-	Memory       *vm.VMMEMObjectTable
-	Program      []vm.VMInstr
+	CallStack    *CallStack
+	OperandStack *OperandStack
+	Memory       *VMMEMObjectTable
+	Program      []VMInstr
 	PC           int
+
+	isFunctionCallState         bool
+	curruntFunctionName         string
+	functionUsedMemoryVariables map[string][]string
+	callDepth                   int
 }
 
-func NewVM(input []vm.VMInstr, wg *sync.WaitGroup) *VM {
-	mem := vm.NewVMMEMObjTable()
+func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
+	mem := NewVMMEMObjTable()
 	GfxNew(640, 480, wg) // Initialize graphics context
 	return &VM{
-		CallStack:    vm.NewCallStack(),
-		OperandStack: vm.NewOperandStack(),
+		CallStack:    NewCallStack(),
+		OperandStack: NewOperandStack(),
 		Memory:       &mem,
 		Program:      input,
 		PC:           0,
+
+		isFunctionCallState:         false,
+		curruntFunctionName:         "",
+		functionUsedMemoryVariables: make(map[string][]string),
+		callDepth:                   0,
 	}
 }
 
 func (v *VM) Run(debugmode bool) {
 	for v.PC < len(v.Program) {
-		if debugmode {
-			fmt.Printf("Currunt PC: %d\n | INSTR: %s\n", v.PC, ResolveVMInstruction(v.Program[v.PC]))
-		}
-
 		if ShouldQuit {
 			return
 		}
 		instr := v.Program[v.PC]
 
 		switch instr.Op {
-		case vm.OpPush:
+		case OpPush:
 			v.OperandStack.Push(instr.Oprand1)
-		case vm.OpPop:
+		case OpPop:
 			v.OperandStack.Pop()
-		case vm.OpStoreGlobal:
+		case OpStoreGlobal:
 			name := v.OperandStack.Pop().StringData
 			val := v.OperandStack.Pop()
 			if !v.Memory.HasObj(name) {
 				v.Memory.MakeObj(name)
 			}
 			v.Memory.SetObj(name, val)
-		case vm.OpLoadGlobal:
+			if v.isFunctionCallState {
+				v.functionUsedMemoryVariables[v.curruntFunctionName] = append(v.functionUsedMemoryVariables[v.curruntFunctionName], name)
+			}
+		case OpLoadGlobal:
 			name := v.OperandStack.Pop().StringData
 			val := v.Memory.GetObj(name)
 			v.OperandStack.Push(*val)
-		case vm.OpDefFunc:
+		case OpDefFunc:
 			// The compiler now emits an OpJmp instruction right after OpDefFunc
 			// to skip the function body during the initial pass. The VM will
 			// just execute that jump.
 			// The JumpPc for the function call needs to point to the instruction
 			// right after the OpJmp, which is at PC + 2.
 			funcName := instr.Oprand1.StringData
-			funcObj := vm.VMFunctionObject{
+			funcObj := VMFunctionObject{
 				JumpPc: v.PC + 2, // PC is at OpDefFunc, +1 is OpJmp, +2 is start of body
 			}
 			v.Memory.MakeFunc(funcName)
@@ -68,109 +75,116 @@ func (v *VM) Run(debugmode bool) {
 
 			// The VM's main loop will increment PC, and the OpJmp will be executed,
 			// so no manual skipping is needed here.
-		case vm.OpCall:
+		case OpCall:
 			funcName := v.OperandStack.Pop().StringData
 			function := v.Memory.GetFunc(funcName)
 
 			v.CallStack.Push(v.PC)
 			v.PC = function.JumpPc - 1
-		case vm.OpReturn:
+			v.callDepth++
+			v.isFunctionCallState = true
+			v.curruntFunctionName = funcName
+		case OpReturn:
 			if v.CallStack.IsEmpty() {
 				return // Or handle error
 			}
 			v.PC = v.CallStack.Pop()
-		case vm.OpSyscall:
+			PurgeVMMEM(v.Memory, v)
+			v.isFunctionCallState = false
+			v.curruntFunctionName = ""
+			v.callDepth--
+		case OpSyscall:
 			doSyscall(*v, instr.Oprand1.IntData)
-		case vm.OpAdd:
+		case OpAdd:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a + b }, func(a, b int64) int64 { return a + b }, func(a, b string) string { return a + b }))
-		case vm.OpSub:
+		case OpSub:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a - b }, func(a, b int64) int64 { return a - b }, nil))
-		case vm.OpMul:
+		case OpMul:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a * b }, func(a, b int64) int64 { return a * b }, nil))
-		case vm.OpDiv:
+		case OpDiv:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a / b }, func(a, b int64) int64 { return a / b }, nil))
-		case vm.OpMod:
+		case OpMod:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Operate(right, nil, func(a, b int64) int64 { return a % b }, nil))
-		case vm.OpAnd:
+		case OpAnd:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.Type == vm.BOOLEAN && right.Type == vm.BOOLEAN {
-				v.OperandStack.Push(vm.VMDataObject{Type: vm.BOOLEAN, BoolData: left.BoolData && right.BoolData})
+			if left.Type == BOOLEAN && right.Type == BOOLEAN {
+				v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.BoolData && right.BoolData})
 			}
-		case vm.OpOr:
+		case OpOr:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.Type == vm.BOOLEAN && right.Type == vm.BOOLEAN {
-				v.OperandStack.Push(vm.VMDataObject{Type: vm.BOOLEAN, BoolData: left.BoolData || right.BoolData})
+			if left.Type == BOOLEAN && right.Type == BOOLEAN {
+				v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.BoolData || right.BoolData})
 			}
-		case vm.OpNot:
+		case OpNot:
 			val := v.OperandStack.Pop()
-			if val.Type == vm.BOOLEAN {
-				v.OperandStack.Push(vm.VMDataObject{Type: vm.BOOLEAN, BoolData: !val.BoolData})
+			if val.Type == BOOLEAN {
+				v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: !val.BoolData})
 			}
-		case vm.OpCmpEq:
+		case OpCmpEq:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.BOOLEAN, BoolData: left.IsEqualTo(right)})
-		case vm.OpCmpNeq:
+			v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.IsEqualTo(right)})
+		case OpCmpNeq:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.BOOLEAN, BoolData: left.IsNotEqualTo(right)})
-		case vm.OpCmpGt:
+			v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.IsNotEqualTo(right)})
+		case OpCmpGt:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }))
-		case vm.OpCmpLt:
+		case OpCmpLt:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }))
-		case vm.OpCmpGte:
+		case OpCmpGte:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }))
-		case vm.OpCmpLte:
+		case OpCmpLte:
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
 			v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }))
-		case vm.OpJmp:
+		case OpJmp:
 			v.PC = int(instr.Oprand1.IntData)
 			continue
-		case vm.OpJmpIfFalse:
+		case OpJmpIfFalse:
 			condition := v.OperandStack.Pop()
-			if condition.Type == vm.BOOLEAN && !condition.BoolData {
+			if condition.Type == BOOLEAN && !condition.BoolData {
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
-		case vm.OpCstInt:
+		case OpCstInt:
 			val := v.OperandStack.Pop()
-			v.OperandStack.Push(val.CastTo(vm.INTGER))
-		case vm.OpCstReal:
+			v.OperandStack.Push(val.CastTo(INTGER))
+		case OpCstReal:
 			val := v.OperandStack.Pop()
-			v.OperandStack.Push(val.CastTo(vm.REAL))
-		case vm.OpCstStr:
+			v.OperandStack.Push(val.CastTo(REAL))
+		case OpCstStr:
 			val := v.OperandStack.Pop()
-			v.OperandStack.Push(val.CastTo(vm.STRING))
-		case vm.OpHlt:
+			v.OperandStack.Push(val.CastTo(STRING))
+		case OpHlt:
 			ShouldQuit = true
 			return
-		case vm.OpIndex:
+		case OpIndex:
 			index := v.OperandStack.Pop()
 			pack := v.OperandStack.Pop()
-			if pack.Type != vm.PACK || pack.PackData == nil {
-				v.OperandStack.Push(vm.VMDataObject{}) // Push nil
+			if pack.Type != PACK || pack.PackData == nil {
+				v.OperandStack.Push(VMDataObject{}) // Push nil
 				break
 			}
-			key := vm.PackKey{
+			key := PackKey{
 				Type:       index.Type,
 				IntData:    index.IntData,
 				FloatData:  index.FloatData,
@@ -180,19 +194,19 @@ func (v *VM) Run(debugmode bool) {
 			if val, ok := (pack.PackData)[key]; ok {
 				v.OperandStack.Push(val)
 			} else {
-				v.OperandStack.Push(vm.VMDataObject{}) // Push nil
+				v.OperandStack.Push(VMDataObject{}) // Push nil
 			}
-		case vm.OpMakePack:
-			pack := make(map[vm.PackKey]vm.VMDataObject)
-			v.OperandStack.Push(vm.VMDataObject{Type: vm.PACK, PackData: pack})
-		case vm.OpSetIndex:
+		case OpMakePack:
+			pack := make(map[PackKey]VMDataObject)
+			v.OperandStack.Push(VMDataObject{Type: PACK, PackData: pack})
+		case OpSetIndex:
 			value := v.OperandStack.Pop()
 			index := v.OperandStack.Pop()
 			pack := v.OperandStack.Pop()
-			if pack.Type != vm.PACK || pack.PackData == nil {
+			if pack.Type != PACK || pack.PackData == nil {
 				break
 			}
-			key := vm.PackKey{
+			key := PackKey{
 				Type:       index.Type,
 				IntData:    index.IntData,
 				FloatData:  index.FloatData,

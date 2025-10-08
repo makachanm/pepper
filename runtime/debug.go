@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"fmt"
-	"pepper/vm"
 	"strings"
 )
 
@@ -40,70 +39,70 @@ func DumpMemory(v *VM) {
 	}
 }
 
-func ResolveVMInstruction(instr vm.VMInstr) string {
+func ResolveVMInstruction(instr VMInstr) string {
 	opCode := ""
 	switch instr.Op {
-	case vm.OpPush:
+	case OpPush:
 		opCode = "OpPush"
-	case vm.OpPop:
+	case OpPop:
 		opCode = "OpPop"
-	case vm.OpStoreGlobal:
+	case OpStoreGlobal:
 		opCode = "OpStoreGlobal"
-	case vm.OpLoadGlobal:
+	case OpLoadGlobal:
 		opCode = "OpLoadGlobal"
-	case vm.OpDefFunc:
+	case OpDefFunc:
 		opCode = "OpDefFunc"
-	case vm.OpCall:
+	case OpCall:
 		opCode = "OpCall"
-	case vm.OpReturn:
+	case OpReturn:
 		opCode = "OpReturn"
-	case vm.OpSyscall:
+	case OpSyscall:
 		opCode = "OpSyscall"
-	case vm.OpAdd:
+	case OpAdd:
 		opCode = "OpAdd"
-	case vm.OpSub:
+	case OpSub:
 		opCode = "OpSub"
-	case vm.OpMul:
+	case OpMul:
 		opCode = "OpMul"
-	case vm.OpDiv:
+	case OpDiv:
 		opCode = "OpDiv"
-	case vm.OpMod:
+	case OpMod:
 		opCode = "OpMod"
-	case vm.OpAnd:
+	case OpAnd:
 		opCode = "OpAnd"
-	case vm.OpOr:
+	case OpOr:
 		opCode = "OpOr"
-	case vm.OpNot:
+	case OpNot:
 		opCode = "OpNot"
-	case vm.OpCmpEq:
+	case OpCmpEq:
 		opCode = "OpCmpEq"
-	case vm.OpCmpNeq:
+	case OpCmpNeq:
 		opCode = "OpCmpNeq"
-	case vm.OpCmpGt:
+	case OpCmpGt:
 		opCode = "OpCmpGt"
-	case vm.OpCmpLt:
+	case OpCmpLt:
 		opCode = "OpCmpLt"
-	case vm.OpCmpGte:
+	case OpCmpGte:
 		opCode = "OpCmpGte"
-	case vm.OpCmpLte:
+	case OpCmpLte:
 		opCode = "OpCmpLte"
-	case vm.OpJmp:
+	case OpJmp:
 		opCode = "OpJmp"
-	case vm.OpJmpIfFalse:
+	case OpJmpIfFalse:
 		opCode = "OpJmpIfFalse"
-	case vm.OpCstInt:
+	case OpCstInt:
 		opCode = "OpCstInt"
-	case vm.OpCstReal:
+	case OpCstReal:
 		opCode = "OpCstReal"
-	case vm.OpCstStr:
+	case OpCstStr:
 		opCode = "OpCstStr"
-	case vm.OpHlt:
+	case OpHlt:
 		opCode = "OpHlt"
-	case vm.OpIndex:
+	case OpIndex:
 		opCode = "OpIndex"
-	case vm.OpMakePack:
+	case OpMakePack:
 		opCode = "OpMakePack"
-	case vm.OpSetIndex:
+	case OpSetIndex:
 		opCode = "OpSetIndex"
 	default:
 		opCode = fmt.Sprintf("UnknownOp(%d)", instr.Op)
@@ -115,20 +114,20 @@ func ResolveVMInstruction(instr vm.VMInstr) string {
 	return fmt.Sprintf("%s %s", opCode, oprand1Str)
 }
 
-func formatVMDataObject(obj vm.VMDataObject) string {
+func formatVMDataObject(obj VMDataObject) string {
 	switch obj.Type {
-	case vm.INTGER:
+	case INTGER:
 		return fmt.Sprintf("INT(%d)", obj.IntData)
-	case vm.REAL:
+	case REAL:
 		return fmt.Sprintf("REAL(%f)", obj.FloatData)
-	case vm.STRING:
+	case STRING:
 		if obj.StringData == "\n" {
 			return fmt.Sprintf("STR(%s)", "newline")
 		}
 		return fmt.Sprintf("STR(%s)", obj.StringData)
-	case vm.BOOLEAN:
+	case BOOLEAN:
 		return fmt.Sprintf("BOOL(%t)", obj.BoolData)
-	case vm.PACK:
+	case PACK:
 		var builder strings.Builder
 		builder.WriteString("PACK([")
 		i := 0

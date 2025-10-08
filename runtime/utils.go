@@ -1,58 +1,57 @@
 package runtime
 
 import (
-	"pepper/vm"
 	"sort"
 )
 
-// convertInterfaceToVMObject converts a Go interface{} (typically from json.Unmarshal) to a vm.VMDataObject.
-func convertInterfaceToVMObject(data interface{}) vm.VMDataObject {
+// convertInterfaceToVMObject converts a Go interface{} (typically from json.Unmarshal) to a VMDataObject.
+func convertInterfaceToVMObject(data interface{}) VMDataObject {
 	if data == nil {
-		return vm.VMDataObject{} // Represent nil as a nil VMDataObject
+		return VMDataObject{} // Represent nil as a nil VMDataObject
 	}
 
 	switch v := data.(type) {
 	case float64:
 		if v == float64(int64(v)) {
-			return vm.VMDataObject{Type: vm.INTGER, IntData: int64(v)}
+			return VMDataObject{Type: INTGER, IntData: int64(v)}
 		}
-		return vm.VMDataObject{Type: vm.REAL, FloatData: v}
+		return VMDataObject{Type: REAL, FloatData: v}
 	case string:
-		return vm.VMDataObject{Type: vm.STRING, StringData: v}
+		return VMDataObject{Type: STRING, StringData: v}
 	case bool:
-		return vm.VMDataObject{Type: vm.BOOLEAN, BoolData: v}
+		return VMDataObject{Type: BOOLEAN, BoolData: v}
 	case map[string]interface{}:
-		packData := make(map[vm.PackKey]vm.VMDataObject)
+		packData := make(map[PackKey]VMDataObject)
 		for key, value := range v {
-			packKey := vm.PackKey{Type: vm.STRING, StringData: key}
+			packKey := PackKey{Type: STRING, StringData: key}
 			packData[packKey] = convertInterfaceToVMObject(value)
 		}
-		return vm.VMDataObject{Type: vm.PACK, PackData: packData}
+		return VMDataObject{Type: PACK, PackData: packData}
 	case []interface{}:
-		packData := make(map[vm.PackKey]vm.VMDataObject)
+		packData := make(map[PackKey]VMDataObject)
 		for i, value := range v {
-			packKey := vm.PackKey{Type: vm.INTGER, IntData: int64(i)}
+			packKey := PackKey{Type: INTGER, IntData: int64(i)}
 			packData[packKey] = convertInterfaceToVMObject(value)
 		}
-		return vm.VMDataObject{Type: vm.PACK, PackData: packData}
+		return VMDataObject{Type: PACK, PackData: packData}
 	default:
 		// Return a nil VMDataObject for unsupported types
-		return vm.VMDataObject{}
+		return VMDataObject{}
 	}
 }
 
-// convertVMObjectToInterface converts a vm.VMDataObject to a Go interface{} for json.Marshal.
-func convertVMObjectToInterface(obj vm.VMDataObject) interface{} {
+// convertVMObjectToInterface converts a VMDataObject to a Go interface{} for json.Marshal.
+func convertVMObjectToInterface(obj VMDataObject) interface{} {
 	switch obj.Type {
-	case vm.INTGER:
+	case INTGER:
 		return obj.IntData
-	case vm.REAL:
+	case REAL:
 		return obj.FloatData
-	case vm.STRING:
+	case STRING:
 		return obj.StringData
-	case vm.BOOLEAN:
+	case BOOLEAN:
 		return obj.BoolData
-	case vm.PACK:
+	case PACK:
 		if obj.PackData == nil {
 			return nil
 		}
@@ -61,7 +60,7 @@ func convertVMObjectToInterface(obj vm.VMDataObject) interface{} {
 		isArray := true
 		keys := make([]int, 0, len(obj.PackData))
 		for k := range obj.PackData {
-			if k.Type != vm.INTGER {
+			if k.Type != INTGER {
 				isArray = false
 				break
 			}
@@ -83,7 +82,7 @@ func convertVMObjectToInterface(obj vm.VMDataObject) interface{} {
 			if isArray {
 				slice := make([]interface{}, len(obj.PackData))
 				for i := range slice {
-					key := vm.PackKey{Type: vm.INTGER, IntData: int64(i)}
+					key := PackKey{Type: INTGER, IntData: int64(i)}
 					slice[i] = convertVMObjectToInterface((obj.PackData)[key])
 				}
 				return slice

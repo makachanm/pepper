@@ -5,7 +5,7 @@ import (
 	"os"
 	"pepper/lexer"
 	"pepper/parser"
-	"pepper/vm"
+	"pepper/runtime"
 	"reflect"
 )
 
@@ -17,26 +17,26 @@ type LoopContext struct {
 }
 
 type Compiler struct {
-	instructions         []vm.VMInstr
+	instructions         []runtime.VMInstr
 	loopContexts         []*LoopContext
-	standardFunctionMaps map[string][]vm.VMInstr
+	standardFunctionMaps map[string][]runtime.VMInstr
 }
 
 func NewCompiler() *Compiler {
 	return &Compiler{
 		loopContexts:         make([]*LoopContext, 0),
-		standardFunctionMaps: make(map[string][]vm.VMInstr),
+		standardFunctionMaps: make(map[string][]runtime.VMInstr),
 	}
 }
 
-func (c *Compiler) Compile(program *parser.Program, excludestd bool) []vm.VMInstr {
+func (c *Compiler) Compile(program *parser.Program, excludestd bool) []runtime.VMInstr {
 	if !excludestd {
 		c.defineStandardFunctions()
 		for name, instrs := range c.standardFunctionMaps {
-			c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpDefFunc, Oprand1: vm.VMDataObject{Type: vm.STRING, StringData: name}})
-			c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpJmp, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(c.instructions)) + 3}})
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpDefFunc, Oprand1: runtime.VMDataObject{Type: runtime.STRING, StringData: name}})
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpJmp, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(len(c.instructions)) + 3}})
 			c.instructions = append(c.instructions, instrs...)
-			c.instructions = append(c.instructions, vm.VMInstr{Op: vm.OpReturn})
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpReturn})
 		}
 	}
 
@@ -60,11 +60,11 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 		c.compileDimStatement(node)
 	case *parser.ReturnStatement:
 		c.compileExpr(node.ReturnValue)
-		c.emit(vm.OpReturn)
+		c.emit(runtime.OpReturn)
 	case *parser.BlockStatement:
 		if len(node.Statements) == 0 {
 			if isExprContext {
-				c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
+				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
 			}
 			return
 		}
@@ -125,21 +125,21 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.MemberAccessExpression:
 		c.compileMemberAccessExpression(node)
 	case *parser.IntegerLiteral:
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.INTGER, IntData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: node.Value})
 	case *parser.RealLiteral:
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.REAL, FloatData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.REAL, FloatData: node.Value})
 	case *parser.StringLiteral:
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Value})
 	case *parser.Boolean:
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.BOOLEAN, BoolData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.BOOLEAN, BoolData: node.Value})
 	case *parser.NilLiteral:
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Nil
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Nil
 	case *parser.Identifier:
 		if node.Value == "" {
 			panic("compiling empty identifier")
 		}
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Value})
-		c.emit(vm.OpLoadGlobal)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Value})
+		c.emit(runtime.OpLoadGlobal)
 	case *parser.PackLiteral:
 		c.compilePackLiteral(node)
 	default:
@@ -149,7 +149,7 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 
 func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 	if len(node.Statements) == 0 {
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Nil for empty block
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Nil for empty block
 		return
 	}
 	last := len(node.Statements) - 1
@@ -161,18 +161,18 @@ func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 
 func (c *Compiler) compileLetStatement(node *parser.LetStatement) {
 	c.compileExpr(node.Value)
-	c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Name.Value})
-	c.emit(vm.OpStoreGlobal)
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
+	c.emit(runtime.OpStoreGlobal)
 }
 
 func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
 	if node.Value == nil {
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Push nil
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Push nil
 	} else {
 		c.compileExpr(node.Value)
 	}
-	c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Name.Value})
-	c.emit(vm.OpStoreGlobal)
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
+	c.emit(runtime.OpStoreGlobal)
 }
 
 func (c *Compiler) compileInfixExpr(node *parser.InfixExpression) {
@@ -181,31 +181,31 @@ func (c *Compiler) compileInfixExpr(node *parser.InfixExpression) {
 
 	switch node.Operator {
 	case "+":
-		c.emit(vm.OpAdd)
+		c.emit(runtime.OpAdd)
 	case "-":
-		c.emit(vm.OpSub)
+		c.emit(runtime.OpSub)
 	case "*":
-		c.emit(vm.OpMul)
+		c.emit(runtime.OpMul)
 	case "/":
-		c.emit(vm.OpDiv)
+		c.emit(runtime.OpDiv)
 	case "%":
-		c.emit(vm.OpMod)
+		c.emit(runtime.OpMod)
 	case "==":
-		c.emit(vm.OpCmpEq)
+		c.emit(runtime.OpCmpEq)
 	case "!=":
-		c.emit(vm.OpCmpNeq)
+		c.emit(runtime.OpCmpNeq)
 	case ">":
-		c.emit(vm.OpCmpGt)
+		c.emit(runtime.OpCmpGt)
 	case "<":
-		c.emit(vm.OpCmpLt)
+		c.emit(runtime.OpCmpLt)
 	case ">=":
-		c.emit(vm.OpCmpGte)
+		c.emit(runtime.OpCmpGte)
 	case "<=":
-		c.emit(vm.OpCmpLte)
+		c.emit(runtime.OpCmpLte)
 	case "and":
-		c.emit(vm.OpAnd)
+		c.emit(runtime.OpAnd)
 	case "or":
-		c.emit(vm.OpOr)
+		c.emit(runtime.OpOr)
 	default:
 		panic(fmt.Sprintf("Unknown infix operator: %s", node.Operator))
 	}
@@ -215,10 +215,10 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 	c.compileExpr(node.Right)
 	switch node.Operator {
 	case "not":
-		c.emit(vm.OpNot)
+		c.emit(runtime.OpNot)
 	case "-":
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.INTGER, IntData: 0})
-		c.emit(vm.OpSub)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: 0})
+		c.emit(runtime.OpSub)
 	default:
 		panic(fmt.Sprintf("Unknown prefix operator: %s", node.Operator))
 	}
@@ -227,18 +227,18 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 	c.compileExpr(node.Condition)
 	// Emit a jump instruction that will be patched later.
-	jmpIfFalsePos := c.emitWithPlaceholder(vm.OpJmpIfFalse)
+	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
 
 	// Compile the consequence block. It's an expression, so the last statement's
 	// value should be left on the stack.
 	if len(node.Consequence.Statements) == 0 {
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
 	} else {
 		c.compileStmt(node.Consequence, true)
 	}
 
 	// Emit a jump to skip the alternative block.
-	jmpPos := c.emitWithPlaceholder(vm.OpJmp)
+	jmpPos := c.emitWithPlaceholder(runtime.OpJmp)
 
 	// Patch the first jump to point to the start of the alternative.
 	c.patchJump(jmpIfFalsePos)
@@ -246,7 +246,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 	// Compile the alternative block.
 	if node.Alternative == nil {
 		// If there's no `else` block, the expression evaluates to nil.
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
 	} else {
 		c.compileStmt(node.Alternative, true)
 	}
@@ -256,24 +256,24 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 }
 
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
-	c.emit(vm.OpDefFunc, vm.VMDataObject{Type: vm.STRING, StringData: node.Name.Value})
+	c.emit(runtime.OpDefFunc, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
 
 	// Emit a jump to skip the function body during initial execution
-	jumpPos := c.emitWithPlaceholder(vm.OpJmp)
+	jumpPos := c.emitWithPlaceholder(runtime.OpJmp)
 
 	// Parameters are handled at the beginning of the function body execution.
 	// The arguments are pushed onto the stack by the caller.
 	// We iterate in reverse to assign them correctly.
 	for i := len(node.Parameters) - 1; i >= 0; i-- {
 		pname := node.Parameters[i]
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: pname.Value})
-		c.emit(vm.OpStoreGlobal)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: pname.Value})
+		c.emit(runtime.OpStoreGlobal)
 	}
 
 	c.compileStmt(node.Body, true)
 	if len(node.Body.Statements) == 0 || !isReturnStatement(node.Body.Statements[len(node.Body.Statements)-1]) {
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.NIL}) // Push nil
-		c.emit(vm.OpReturn)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Push nil
+		c.emit(runtime.OpReturn)
 	}
 
 	// Patch the jump to the instruction after the function body.
@@ -290,42 +290,42 @@ func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
 		panic("Calling non-identifier function is not supported yet")
 	}
 
-	c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
-	c.emit(vm.OpCall)
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
+	c.emit(runtime.OpCall)
 }
 
 func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression) {
 	if ident, ok := node.Left.(*parser.Identifier); ok {
 		c.compileExpr(node.Value)
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
-		c.emit(vm.OpStoreGlobal)
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
+		c.emit(runtime.OpStoreGlobal)
 	} else if indexExpr, ok := node.Left.(*parser.IndexExpression); ok {
 		c.compileExpr(indexExpr.Left)  // pack
 		c.compileExpr(indexExpr.Index) // index
 		c.compileExpr(node.Value)      // value
-		c.emit(vm.OpSetIndex)          // returns modified pack
+		c.emit(runtime.OpSetIndex)     // returns modified pack
 
 		if ident, ok := indexExpr.Left.(*parser.Identifier); ok {
 			// The modified pack is on the stack. Now push the name and store.
-			c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
-			c.emit(vm.OpStoreGlobal)
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
+			c.emit(runtime.OpStoreGlobal)
 		} else {
 			// The pack was a result of an expression, can't store it back.
 			// Pop the modified pack from the stack as it's not used.
-			c.emit(vm.OpPop)
+			c.emit(runtime.OpPop)
 		}
 	} else if memberAccessExpr, ok := node.Left.(*parser.MemberAccessExpression); ok {
-		c.compileExpr(memberAccessExpr.Object)                                                         // pack
-		c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: memberAccessExpr.Member.Value}) // index
-		c.compileExpr(node.Value)                                                                      // value
-		c.emit(vm.OpSetIndex)                                                                          // returns modified pack
+		c.compileExpr(memberAccessExpr.Object)                                                                        // pack
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: memberAccessExpr.Member.Value}) // index
+		c.compileExpr(node.Value)                                                                                     // value
+		c.emit(runtime.OpSetIndex)                                                                                    // returns modified pack
 
 		if ident, ok := memberAccessExpr.Object.(*parser.Identifier); ok {
 			// The modified pack is on the stack. Now push the name and store.
-			c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: ident.Value})
-			c.emit(vm.OpStoreGlobal)
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
+			c.emit(runtime.OpStoreGlobal)
 		} else {
-			c.emit(vm.OpPop)
+			c.emit(runtime.OpPop)
 		}
 	} else {
 		panic(fmt.Sprintf("Assignment to this expression type is not supported: %T", node.Left))
@@ -337,11 +337,11 @@ func (c *Compiler) compileLoopStatement(node *parser.LoopStatement) {
 	c.pushLoopContext(loopStart)
 
 	c.compileExpr(node.Condition)
-	jmpIfFalsePos := c.emitWithPlaceholder(vm.OpJmpIfFalse)
+	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
 
 	c.compileStmt(node.Body, false)
 
-	c.emit(vm.OpJmp, vm.VMDataObject{Type: vm.INTGER, IntData: int64(loopStart)})
+	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(loopStart)})
 
 	loopEnd := len(c.instructions)
 	c.patchJump(jmpIfFalsePos)
@@ -371,7 +371,7 @@ func (c *Compiler) compileBreakStatement() {
 	if len(c.loopContexts) == 0 {
 		panic("'break' outside of a loop")
 	}
-	patchPos := c.emitWithPlaceholder(vm.OpJmp)
+	patchPos := c.emitWithPlaceholder(runtime.OpJmp)
 	currentLoop := c.loopContexts[len(c.loopContexts)-1]
 	currentLoop.breakPatches = append(currentLoop.breakPatches, patchPos)
 }
@@ -381,44 +381,44 @@ func (c *Compiler) compileContinueStatement() {
 		panic("'continue' outside of a loop")
 	}
 	currentLoop := c.loopContexts[len(c.loopContexts)-1]
-	c.emit(vm.OpJmp, vm.VMDataObject{Type: vm.INTGER, IntData: int64(currentLoop.startPos)})
+	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(currentLoop.startPos)})
 }
 
 func (c *Compiler) compilePackLiteral(node *parser.PackLiteral) {
-	//c.emit(vm.OpPush, vm.VMDataObject{Type: vm.INTGER, IntData: int64(len(node.Pairs))})
-	c.emit(vm.OpMakePack)
+	//c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(len(node.Pairs))})
+	c.emit(runtime.OpMakePack)
 
 	for key, value := range node.Pairs {
 		c.compileExpr(key)
 		c.compileExpr(value)
-		c.emit(vm.OpSetIndex)
+		c.emit(runtime.OpSetIndex)
 	}
 }
 
 func (c *Compiler) compileIndexExpression(node *parser.IndexExpression) {
 	c.compileExpr(node.Left)
 	c.compileExpr(node.Index)
-	c.emit(vm.OpIndex)
+	c.emit(runtime.OpIndex)
 }
 
 func (c *Compiler) compileMemberAccessExpression(node *parser.MemberAccessExpression) {
 	c.compileExpr(node.Object)
-	c.emit(vm.OpPush, vm.VMDataObject{Type: vm.STRING, StringData: node.Member.Value})
-	c.emit(vm.OpIndex)
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Member.Value})
+	c.emit(runtime.OpIndex)
 }
 
 // --- Helper methods ---
 
-func (c *Compiler) emit(op vm.VMOp, operands ...vm.VMDataObject) {
-	instr := vm.VMInstr{Op: op}
+func (c *Compiler) emit(op runtime.VMOp, operands ...runtime.VMDataObject) {
+	instr := runtime.VMInstr{Op: op}
 	if len(operands) > 0 {
 		instr.Oprand1 = operands[0]
 	}
 	c.instructions = append(c.instructions, instr)
 }
 
-func (c *Compiler) emitWithPlaceholder(op vm.VMOp) int {
-	instr := vm.VMInstr{Op: op, Oprand1: vm.VMDataObject{Type: vm.INTGER, IntData: -1}}
+func (c *Compiler) emitWithPlaceholder(op runtime.VMOp) int {
+	instr := runtime.VMInstr{Op: op, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: -1}}
 	c.instructions = append(c.instructions, instr)
 	return len(c.instructions) - 1
 }
