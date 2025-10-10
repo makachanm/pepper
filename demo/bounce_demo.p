@@ -16,16 +16,16 @@ dim gravity = 0.5
 dim bounce = 1.0 /* 튕김 계수 (1.0 = 완전탄성) */
 dim friction = 0.995 /* 바닥에서 수평 감쇠 */
 
-gfx_set_window_title[`Bouncing Ball`]
+set_title[`Bouncing Ball`]
 
 loop [true] then
   /* 배경 지우기 */
-  gfx_set_source_rgb[0 0 0]
-  gfx_clear[]
+  set_color[0 0 0]
+  clear[]
 
   /* 공 그리기 */
-  gfx_set_source_rgb[50 200 255]
-  gfx_draw_circle[x y r]
+  set_color[50 200 255]
+  draw_circle[x y r]
 
   /* 물리 업데이트 */
   vy = vy + gravity
@@ -64,6 +64,6 @@ loop [true] then
     end
   end
 
-  gfx_finish[]
+  render[]
   sleep[16] /* ~60fps */
 end

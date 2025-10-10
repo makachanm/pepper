@@ -55,8 +55,8 @@ end
 /* main loop */
 loop [true] then
   /* draw background */
-  gfx_set_source_rgb[0 0 0]
-  gfx_clear[]
+  set_color[0 0 0]
+  clear[]
 
   /* draw bricks */
   dim row = 0
@@ -68,12 +68,12 @@ loop [true] then
         dim bx = BRICK_GAP + col * (BRICK_W + BRICK_GAP)
         dim by = BRICK_TOP + row * (BRICK_H + BRICK_GAP)
         /* color by row */
-        if [ row == 0 ] then gfx_set_source_rgb[200 80 80] end
-        if [ row == 1 ] then gfx_set_source_rgb[220 140 60] end
-        if [ row == 2 ] then gfx_set_source_rgb[200 200 80] end
-        if [ row == 3 ] then gfx_set_source_rgb[120 200 120] end
-        if [ row == 4 ] then gfx_set_source_rgb[120 160 220] end
-        gfx_draw_rect[bx by BRICK_W BRICK_H]
+        if [ row == 0 ] then set_color[200 80 80] end
+        if [ row == 1 ] then set_color[220 140 60] end
+        if [ row == 2 ] then set_color[200 200 80] end
+        if [ row == 3 ] then set_color[120 200 120] end
+        if [ row == 4 ] then set_color[120 160 220] end
+        draw_rect[bx by BRICK_W BRICK_H]
       end
       col = col + 1
     end
@@ -81,23 +81,23 @@ loop [true] then
   end
 
   /* draw paddle */
-  gfx_set_source_rgb[0 0 255]
-  gfx_draw_rect[paddle_x paddle_y PADDLE_W PADDLE_H]
+  set_color[0 0 255]
+  draw_rect[paddle_x paddle_y PADDLE_W PADDLE_H]
 
   /* draw ball */
-  gfx_set_source_rgb[255 220 80]
-  gfx_draw_circle[ball_x ball_y ball_r]
+  set_color[255 220 80]
+  draw_circle[ball_x ball_y ball_r]
 
   /* HUD */
-  gfx_set_source_rgb[255 255 255]
-  gfx_set_font_size[14]
-  gfx_draw_text[8 18 `Score: ` + (score)]
-  gfx_draw_text[520 18 `Lives: ` + (lives)]
+  set_color[255 255 255]
+  set_font_size[14]
+  draw_text[8 18 `Score: ` + (score)]
+  draw_text[520 18 `Lives: ` + (lives)]
 
-  gfx_finish[]
+  render[]
 
   /* input / events */
-  dim e = gfx_wait_event[]
+  dim e = wait_event[]
 
   if [ e->type == `mouse_motion` ] then
     /* center paddle on mouse x */

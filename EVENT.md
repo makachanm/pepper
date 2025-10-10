@@ -2,17 +2,7 @@
 
 Pepper supports an event-driven programming model, which is useful for creating interactive applications and games. Events from the mouse and keyboard are placed in an event queue, which can be accessed from your Pepper script.
 
-## Functions
-
-### `gfx_poll_event()`
-
-Polls for the next event in the queue. If an event is available, it is returned as a pack. If the queue is empty, it immediately returns `nil`.
-
-**Returns:**
-- An event pack if an event is pending.
-- `nil` if no event is pending.
-
-### `gfx_wait_event()`
+### `wait_event[]`
 
 Waits for the next event. If the event queue is empty, this function will pause the script's execution until an event occurs.
 
@@ -87,7 +77,7 @@ Example:
 
 ```pepper
 loop [true] then
-    dim event = gfx_wait_event[]
+    dim event = wait_event[]
 
     if [event->type == "quit"] then
         break

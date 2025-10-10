@@ -11,32 +11,32 @@ dim todo = http_get_json[`https://jsonplaceholder.typicode.com/todos/1`]
 dim title = todo->title
 dim completed = todo->completed
 
-gfx_set_source_rgb[255 255 255] /* White */
-gfx_draw_rect[0 0 800 600]
+set_color[255 255 255] /* White */
+draw_rect[0 0 800 600]
 
 /* Set font and draw title */
-gfx_set_font_face[`sans-serif`]
+set_font[`sans-serif`]
 
-gfx_set_source_rgb[0 0 0] /* Black */
+set_color[0 0 0] /* Black */
 
-gfx_set_font_size[24]
-gfx_draw_text[50 100 `Todo Item:`]
+set_font_size[24]
+draw_text[50 100 `Todo Item:`]
 
-gfx_set_font_size[18]
-gfx_draw_text[50 150 title]
+set_font_size[18]
+draw_text[50 150 title]
 
 /* Draw completed status indicator */
 if [completed == true] then
-    gfx_set_source_rgb[0 255 0] /* Green */
-    gfx_draw_text[50 250 `Status: Completed`]
-    gfx_draw_rect[50 300 200 50]
+    set_color[0 255 0] /* Green */
+    draw_text[50 250 `Status: Completed`]
+    draw_rect[50 300 200 50]
 else
-    gfx_set_source_rgb[255 0 0] /* Red */
-    gfx_draw_text[50 250 `Status: Not Completed`]
-    gfx_draw_rect[50 300 200 50]
+    set_color[255 0 0] /* Red */
+    draw_text[50 250 `Status: Not Completed`]
+    draw_rect[50 300 200 50]
 end
 
 /* Save the result */
 
 /* Finish execution */
-gfx_finish[]
+render[]

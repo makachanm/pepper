@@ -9,19 +9,19 @@ dim w = 50
 dim h = 50
 dim dx = 5 /* speed and direction */
 
-gfx_set_window_title[`Bouncing Rectangle`]
+set_title[`Bouncing Rectangle`]
 
 loop [true] then
   /* Clear screen to black */
-  gfx_set_source_rgb[0 0 0]
-  gfx_clear[]
+  set_color[0 0 0]
+  clear[]
 
   /* Draw rectangle */
-  gfx_set_source_rgb[255 0 0]
-  gfx_draw_rect[x y w h]
+  set_color[255 0 0]
+  draw_rect[x y w h]
 
   /* Update screen */
-  gfx_finish[]
+  render[]
 
   /* Move rectangle */
   x = x + dx
