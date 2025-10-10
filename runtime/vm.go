@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -32,6 +33,12 @@ func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 }
 
 func (v *VM) Run(debugmode bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Panic occurred at PC: %d\n", v.PC)
+			panic(r) // re-throw panic
+		}
+	}()
 	for v.PC < len(v.Program) {
 		if ShouldQuit {
 			return

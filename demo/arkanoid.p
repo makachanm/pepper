@@ -215,8 +215,7 @@ loop [true] then
                     ball_vy = 0 - ball_vy
                 end
             end
-        end
-        c2 = c2 + 1
+            c2 = c2 + 1
         end
         r2 = r2 + 1
     end
@@ -237,7 +236,7 @@ loop [true] then
         /* restore all bricks */
         dim k = 1
         loop [ k <= BRICK_ROWS * BRICK_COLS ] then
-          bricks->k = 1
+          bricks|k| = 1
           k = k + 1
         end
       end
@@ -270,7 +269,7 @@ loop [true] then
     end
     dim t = 1
     loop [ t <= BRICK_ROWS * BRICK_COLS ] then
-      bricks->t = 1
+      bricks|t| = 1
       t = t + 1
     end
     ball_launched = false

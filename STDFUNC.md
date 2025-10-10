@@ -1,6 +1,34 @@
 ### 표준 함수 (STANDARD FUNCTIONS)
 Pepper는 기본적인 몇가지 표준 함수를 제공합니다. 표준 함수는 일반적인 함수와 동일하게 호출할 수 있습니다.
 
+### 시스템 (System)
+
+#### quit
+`quit` 함수는 프로그램을 종료합니다.
+```
+quit[]
+```
+
+### 타입 변환 (Type Casting)
+
+#### to_int
+`to_int` 함수는 인자를 정수(integer)로 변환합니다.
+```
+dim i = to_int[3.14] /* 3 */
+```
+
+#### to_real
+`to_real` 함수는 인자를 실수(real)로 변환합니다.
+```
+dim r = to_real[3] /* 3.0 */
+```
+
+#### to_str
+`to_str` 함수는 인자를 문자열(string)로 변환합니다.
+```
+dim s = to_str[123] /* "123" */
+```
+
 ### 입출력 (IO)
 
 #### print
@@ -51,6 +79,30 @@ dim result = cos[0]
 `tan` 함수는 숫자를 인자로 받아 해당 값의 탄젠트(tangent) 값을 반환합니다.
 ```
 dim result = tan[45]
+```
+
+#### asin
+`asin` 함수는 숫자를 인자로 받아 해당 값의 아크사인(arc-sine) 값을 반환합니다.
+```
+dim result = asin[1]
+```
+
+#### acos
+`acos` 함수는 숫자를 인자로 받아 해당 값의 아크코사인(arc-cosine) 값을 반환합니다.
+```
+dim result = acos[1]
+```
+
+#### atan
+`atan` 함수는 숫자를 인자로 받아 해당 값의 아크탄젠트(arc-tangent) 값을 반환합니다.
+```
+dim result = atan[1]
+```
+
+#### 2atan
+`2atan` 함수는 y와 x 두 개의 숫자를 인자로 받아 y/x의 아크탄젠트 값을 반환합니다.
+```
+dim result = 2atan[10 5]
 ```
 
 #### sqrt
@@ -181,6 +233,14 @@ dim json_str = `{ "name": "pepper", "version": 1 }`
 dim p = json_decode[json_str]
 ```
 
+### 시간 (Time)
+
+#### sleep
+`sleep` 함수는 밀리초(ms) 단위의 시간을 인자로 받아 해당 시간만큼 프로그램 실행을 멈춥니다.
+```
+sleep[1000] /* 1초 동안 대기 */
+```
+
 ### 그래픽스 (Graphics)
 
 #### gfx_clear
@@ -255,6 +315,12 @@ gfx_save_to_file[`output.png`]
 gfx_finish[]
 ```
 
+#### gfx_wait_event
+`gfx_wait_event` 함수는 다음 그래픽스 이벤트가 발생할 때까지 기다렸다가 해당 이벤트를 팩으로 반환합니다.
+```
+dim event = gfx_wait_event[]
+```
+
 #### gfx_set_line_width
 `gfx_set_line_width` 함수는 선의 두께를 설정합니다.
 ```
@@ -273,10 +339,10 @@ gfx_stroke[]
 gfx_fill[]
 ```
 
-#### gfx_path_rect
-`gfx_path_rect` 함수는 경로에 사각형을 추가합니다.
+#### gfx_path_rectangle
+`gfx_path_rectangle` 함수는 경로에 사각형을 추가합니다.
 ```
-gfx_path_rect[10 10 100 50]
+gfx_path_rectangle[10 10 100 50]
 ```
 
 #### gfx_path_circle
@@ -309,16 +375,60 @@ gfx_path_close[]
 gfx_resize[800 600]
 ```
 
-#### gfx_get_dimensions
-`gfx_get_dimensions` 함수는 창의 너비와 높이를 팩으로 반환합니다.
+#### gfx_get_width
+`gfx_get_width` 함수는 창의 너비를 반환합니다.
 ```
-dim size = gfx_get_dimensions[]
+dim width = gfx_get_width[]
+```
+
+#### gfx_get_height
+`gfx_get_height` 함수는 창의 높이를 반환합니다.
+```
+dim height = gfx_get_height[]
 ```
 
 #### gfx_set_window_title
 `gfx_set_window_title` 함수는 창의 제목을 설정합니다.
 ```
 gfx_set_window_title[`My Graphics Window`]
+```
+
+#### 그래픽스: 스프라이트 (Graphics: Sprite)
+
+#### gfx_load_sprite
+`gfx_load_sprite` 함수는 이미지 파일 경로를 인자로 받아 스프라이트를 로드하고 ID를 반환합니다.
+```
+dim sprite_id = gfx_load_sprite[`player.png`]
+```
+
+#### gfx_create_sprite
+`gfx_create_sprite` 함수는 너비와 높이를 인자로 받아 빈 스프라이트를 생성하고 ID를 반환합니다.
+```
+dim sprite_id = gfx_create_sprite[64 64]
+```
+
+#### gfx_destroy_sprite
+`gfx_destroy_sprite` 함수는 스프라이트 ID를 인자로 받아 해당 스프라이트를 메모리에서 해제합니다.
+```
+gfx_destroy_sprite[sprite_id]
+```
+
+#### gfx_draw_sprite
+`gfx_draw_sprite` 함수는 스프라이트 ID와 x, y 좌표를 인자로 받아 화면에 스프라이트를 그립니다.
+```
+gfx_draw_sprite[sprite_id 100 150]
+```
+
+#### gfx_set_sprite_rotation
+`gfx_set_sprite_rotation` 함수는 스프라이트 ID와 회전 각도(라디안)를 인자로 받아 스프라이트의 회전을 설정합니다.
+```
+gfx_set_sprite_rotation[sprite_id 0.5]
+```
+
+#### gfx_set_sprite_scale
+`gfx_set_sprite_scale` 함수는 스프라이트 ID와 x, y 스케일 값을 인자로 받아 스프라이트의 크기를 조절합니다.
+```
+gfx_set_sprite_scale[sprite_id 2.0 2.0]
 ```
 
 ### HTTP

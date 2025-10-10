@@ -3,6 +3,8 @@ package runtime
 import (
 	"strconv"
 	"strings"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -210,11 +212,17 @@ func (r1 VMDataObject) Operate(r2 VMDataObject, floatOp func(float64, float64) f
 		switch r2.Type {
 		case INTGER:
 			if floatOp != nil {
-				return VMDataObject{Type: REAL, FloatData: floatOp(r1.FloatData, float64(r2.IntData))}
+				val1 := r1.FloatData
+				val2 := float64(r2.IntData)
+				result := floatOp(val1, val2)
+				return VMDataObject{Type: REAL, FloatData: result}
 			}
 		case REAL:
 			if floatOp != nil {
-				return VMDataObject{Type: REAL, FloatData: floatOp(r1.FloatData, r2.FloatData)}
+				val1 := r1.FloatData
+				val2 := r2.FloatData
+				result := floatOp(val1, val2)
+				return VMDataObject{Type: REAL, FloatData: result}
 			}
 		case STRING:
 			if strOp != nil {
@@ -237,6 +245,7 @@ func (r1 VMDataObject) Operate(r2 VMDataObject, floatOp func(float64, float64) f
 			}
 		}
 	}
+	spew.Dump(r1, r2)
 	panic("Unsupported operation between types" + strconv.FormatInt(int64(r1.Type), 10) + " and " + strconv.FormatInt(int64(r2.Type), 10))
 }
 
@@ -244,6 +253,8 @@ func (obj *VMDataObject) CastTo(d_type ValueType) VMDataObject {
 	switch d_type {
 	case INTGER:
 		switch obj.Type {
+		case INTGER:
+			return *obj
 		case REAL:
 			val := int64(obj.FloatData)
 			return makeIntValueObj(val)
@@ -261,6 +272,8 @@ func (obj *VMDataObject) CastTo(d_type ValueType) VMDataObject {
 
 	case REAL:
 		switch obj.Type {
+		case REAL:
+			return *obj
 		case INTGER:
 			val := float64(obj.IntData)
 			return makeRealValueObj(val)
@@ -272,7 +285,7 @@ func (obj *VMDataObject) CastTo(d_type ValueType) VMDataObject {
 			return makeRealValueObj(val)
 
 		default:
-			panic("Object cannot be converted to " + string(d_type))
+			panic("Object cannot be converted to " + strconv.FormatInt(int64(d_type), 10))
 
 		}
 
