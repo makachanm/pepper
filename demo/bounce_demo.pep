@@ -63,6 +63,7 @@ loop [true] then
       vy = 0
     end
   end
+  draw_line[0 0 640 480]
 
   render[]
   sleep[16] /* ~60fps */

@@ -67,6 +67,9 @@ func doSyscallGfx(vmInstance VM, code int64) {
 		GfxSetSpriteRotation(vmInstance.OperandStack)
 	case 331:
 		GfxSetSpriteScale(vmInstance.OperandStack)
+
+	case 332:
+		GfxDrawDot(vmInstance.OperandStack)
 	}
 }
 

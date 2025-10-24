@@ -134,6 +134,11 @@ func (pg *PepperGraphics) DrawRect(x, y, width, height int) {
 	pg.Surface.Fill()
 }
 
+func (pg *PepperGraphics) DrawDot(x, y int) {
+	pg.Surface.Rectangle(float64(x), float64(y), 1, 1)
+	pg.Surface.Fill()
+}
+
 func (pg *PepperGraphics) DrawCircle(x, y, radius int) {
 	pg.Surface.Arc(float64(x), float64(y), float64(radius), 0, 2*3.141592)
 	pg.Surface.Fill()

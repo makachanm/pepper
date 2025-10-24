@@ -7,6 +7,7 @@ type Graphics interface {
 	Clear()
 	SetSourceRGB(r, g, b float64)
 	DrawRect(x, y, width, height int)
+	DrawDot(x, y int)
 	DrawCircle(x, y, radius int)
 	DrawLine(x1, y1, x2, y2 int)
 	DrawTriangle(x1, y1, x2, y2, x3, y3 int)

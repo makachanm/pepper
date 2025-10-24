@@ -113,6 +113,27 @@ func GfxDrawRect(stack *OperandStack) {
 	Gfx.DrawRect(x, y, width, height)
 }
 
+func GfxDrawDot(stack *OperandStack) {
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+
+	var x, y int
+
+	if xObj.Type == REAL {
+		x = int(xObj.FloatData)
+	} else {
+		x = int(xObj.IntData)
+	}
+
+	if yObj.Type == REAL {
+		y = int(yObj.FloatData)
+	} else {
+		y = int(yObj.IntData)
+	}
+
+	Gfx.DrawDot(x, y)
+}
+
 func GfxDrawCircle(stack *OperandStack) {
 	radiusObj := stack.Pop()
 	yObj := stack.Pop()

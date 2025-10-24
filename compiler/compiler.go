@@ -53,11 +53,13 @@ func (s *SymbolTable) Define(name string) Symbol {
 
 func (s *SymbolTable) Resolve(name string) (Symbol, bool) {
 	obj, ok := s.store[name]
-	if !ok && s.Outer != nil {
-		obj, ok = s.Outer.Resolve(name)
-		return obj, ok
+	if ok {
+		return obj, true
 	}
-	return obj, ok
+	if s.Outer != nil {
+		return s.Outer.Resolve(name)
+	}
+	return obj, false
 }
 
 type LoopContext struct {
@@ -424,7 +426,9 @@ func (c *Compiler) compileLoopStatement(node *parser.LoopStatement) {
 	c.compileExpr(node.Condition)
 	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
 
+	c.enterScope()
 	c.compileStmt(node.Body, false)
+	c.leaveScope()
 
 	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(loopStart)})
 
@@ -444,7 +448,9 @@ func (c *Compiler) compileRepeatStatement(node *parser.RepeatStatement) {
 	c.pushLoopContext(loopStart)
 
 	for i := int64(0); i < count.Value; i++ {
+		c.enterScope()
 		c.compileStmt(node.Body, false)
+		c.leaveScope()
 	}
 
 	loopEnd := len(c.instructions)

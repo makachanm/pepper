@@ -51,7 +51,7 @@ loop [i_height < height] then
       set_color[0 0 0]
     end
 
-    draw_rect[i_width i_height 1 1]
+    draw_dot[i_width i_height]
 
     i_width = (i_width + 1)
   end
