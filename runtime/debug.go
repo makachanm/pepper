@@ -162,3 +162,21 @@ func formatVMDataObject(obj VMDataObject) string {
 		return "EMPTY"
 	}
 }
+
+func DumpBranchProfile(v *VM) {
+	fmt.Println(" ----- BRANCH PROFILE ----- ")
+	if len(v.branchCaches) == 0 {
+		fmt.Println("No branch data collected.")
+		return
+	}
+	fmt.Println("PC\t| Taken\t\t| Not Taken\t| Taken Rate")
+	fmt.Println("---------------------------------------------------------")
+	for pc, profile := range v.branchCaches {
+		total := profile.Taken + profile.NotTaken
+		if total == 0 {
+			continue
+		}
+		rate := float64(profile.Taken) / float64(total) * 100
+		fmt.Printf("%d\t| %d\t\t| %d\t\t| %.2f%%\n", pc, profile.Taken, profile.NotTaken, rate)
+	}
+}

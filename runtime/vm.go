@@ -14,6 +14,20 @@ type VM struct {
 
 	curruntFunctionName string
 	callDepth           int
+
+	branchCaches map[int]*BranchProfiles
+}
+
+type BranchProfiles struct {
+	Taken    int
+	NotTaken int
+}
+
+func NewBranchProfiles() *BranchProfiles {
+	return &BranchProfiles{
+		Taken:    0,
+		NotTaken: 0,
+	}
 }
 
 func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
@@ -29,6 +43,7 @@ func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 
 		curruntFunctionName: "",
 		callDepth:           0,
+		branchCaches:        make(map[int]*BranchProfiles),
 	}
 }
 
@@ -169,50 +184,203 @@ func (v *VM) Run(debugmode bool) {
 			v.PC = int(instr.Oprand1.IntData)
 			continue
 		case OpJmpIfFalse:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			condition := v.OperandStack.Pop()
-			if condition.Type == BOOLEAN && !condition.BoolData {
+
+			if predictTaken {
+				// 분기가 일어날 것으로 예측 -> Taken 조건을 먼저 확인
+				if condition.Type == BOOLEAN && !condition.BoolData {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				// 분기가 일어나지 않을 것으로 예측 -> Not-Taken 조건을 먼저 확인
+				if !(condition.Type == BOOLEAN && !condition.BoolData) {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
 		case OpJmpIfEq:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.IsEqualTo(right) {
+
+			if predictTaken {
+				if left.IsEqualTo(right) {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				if !left.IsEqualTo(right) {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
 		case OpJmpIfNeq:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.IsNotEqualTo(right) {
+
+			if predictTaken {
+				if left.IsNotEqualTo(right) {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				if !left.IsNotEqualTo(right) {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
 		case OpJmpIfGt:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }).BoolData {
+			actualTaken := left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }).BoolData
+
+			if predictTaken {
+				if actualTaken {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				if !actualTaken {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
 		case OpJmpIfLt:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }).BoolData {
+			actualTaken := left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }).BoolData
+
+			if predictTaken {
+				if actualTaken {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				if !actualTaken {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
 		case OpJmpIfGte:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }).BoolData {
+			actualTaken := left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }).BoolData
+
+			if predictTaken {
+				if actualTaken {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				if !actualTaken {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
 		case OpJmpIfLte:
+			profile := v.branchCaches[v.PC]
+			if profile == nil {
+				profile = NewBranchProfiles()
+				v.branchCaches[v.PC] = profile
+			}
+			predictTaken := profile.Taken > profile.NotTaken
+
 			right := v.OperandStack.Pop()
 			left := v.OperandStack.Pop()
-			if left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }).BoolData {
+			actualTaken := left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }).BoolData
+
+			if predictTaken {
+				if actualTaken {
+					profile.Taken++
+					v.PC = int(instr.Oprand1.IntData)
+					continue
+				}
+				profile.NotTaken++
+			} else {
+				if !actualTaken {
+					profile.NotTaken++
+					v.PC++
+					continue
+				}
+				profile.Taken++
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
@@ -272,4 +440,3 @@ func (v *VM) Run(debugmode bool) {
 		v.PC++
 	}
 }
-
