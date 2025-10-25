@@ -78,7 +78,7 @@ type VMMEMObjectTable struct {
 	DataMemory     []VMDataObject
 	FunctionMemory []VMFunctionObject
 
-	currunt_free_dm_pointer int
+	FreeDataMemorySlots     []int
 	currunt_free_fm_pointer int
 }
 
@@ -90,16 +90,41 @@ func NewVMMEMObjTable() VMMEMObjectTable {
 		DataMemory:     make([]VMDataObject, 0),
 		FunctionMemory: make([]VMFunctionObject, 0),
 
-		currunt_free_dm_pointer: 0,
+		FreeDataMemorySlots:     make([]int, 0),
 		currunt_free_fm_pointer: 0,
 	}
 }
 
 func (v *VMMEMObjectTable) MakeObj(name string, scopeKey string) {
 	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
-	v.DataMemory = append(v.DataMemory, VMDataObject{})
-	v.DataTable[key] = v.currunt_free_dm_pointer
-	v.currunt_free_dm_pointer++
+	var index int
+	if len(v.FreeDataMemorySlots) > 0 {
+		// Reuse a free slot
+		index = v.FreeDataMemorySlots[len(v.FreeDataMemorySlots)-1]
+		v.FreeDataMemorySlots = v.FreeDataMemorySlots[:len(v.FreeDataMemorySlots)-1]
+		v.DataMemory[index] = VMDataObject{} // Reset the object
+	} else {
+		// Allocate a new slot
+		index = len(v.DataMemory)
+		v.DataMemory = append(v.DataMemory, VMDataObject{})
+	}
+	v.DataTable[key] = index
+}
+
+func (v *VMMEMObjectTable) DeallocateObj(key VMDataObjKey) {
+	index, ok := v.DataTable[key]
+	if !ok {
+		return // Or handle error: trying to deallocate non-existent object
+	}
+
+	// Clear the object data
+	v.DataMemory[index] = VMDataObject{Type: NIL}
+
+	// Add the index to the free list
+	v.FreeDataMemorySlots = append(v.FreeDataMemorySlots, index)
+
+	// Remove from DataTable
+	delete(v.DataTable, key)
 }
 
 func (v *VMMEMObjectTable) GetObj(name string, scopeKey string) *VMDataObject {
