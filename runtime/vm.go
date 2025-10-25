@@ -384,6 +384,48 @@ func (v *VM) Run(debugmode bool) {
 				v.PC = int(instr.Oprand1.IntData)
 				continue
 			}
+		case OpJmpIfEq:
+			right := v.OperandStack.Pop()
+			left := v.OperandStack.Pop()
+			if left.IsEqualTo(right) {
+				v.PC = int(instr.Oprand1.IntData)
+				continue
+			}
+		case OpJmpIfNeq:
+			right := v.OperandStack.Pop()
+			left := v.OperandStack.Pop()
+			if left.IsNotEqualTo(right) {
+				v.PC = int(instr.Oprand1.IntData)
+				continue
+			}
+		case OpJmpIfGt:
+			right := v.OperandStack.Pop()
+			left := v.OperandStack.Pop()
+			if left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }).BoolData {
+				v.PC = int(instr.Oprand1.IntData)
+				continue
+			}
+		case OpJmpIfLt:
+			right := v.OperandStack.Pop()
+			left := v.OperandStack.Pop()
+			if left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }).BoolData {
+				v.PC = int(instr.Oprand1.IntData)
+				continue
+			}
+		case OpJmpIfGte:
+			right := v.OperandStack.Pop()
+			left := v.OperandStack.Pop()
+			if left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }).BoolData {
+				v.PC = int(instr.Oprand1.IntData)
+				continue
+			}
+		case OpJmpIfLte:
+			right := v.OperandStack.Pop()
+			left := v.OperandStack.Pop()
+			if left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }).BoolData {
+				v.PC = int(instr.Oprand1.IntData)
+				continue
+			}
 		case OpCstInt:
 			val := v.OperandStack.Pop()
 			v.OperandStack.Push(val.CastTo(INTGER))
@@ -440,3 +482,4 @@ func (v *VM) Run(debugmode bool) {
 		v.PC++
 	}
 }
+
