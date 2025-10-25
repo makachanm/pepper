@@ -95,9 +95,18 @@ func eventToPack(event Event) VMDataObject {
 }
 
 func GfxWaitEvent(stack *OperandStack) {
-	if event, ok := EventQueue.DequeueNonBlocking(); ok {
-		stack.Push(eventToPack(event))
+	if len(stack.GetStack()) > 0 {
+		if event, ok := EventQueue.DequeueNonBlocking(); ok {
+			stack.Push(eventToPack(event))
+		} else {
+			stack.Pop()
+			stack.Push(VMDataObject{Type: NIL})
+		}
 	} else {
-		stack.Push(VMDataObject{Type: NIL})
+		if event, ok := EventQueue.DequeueNonBlocking(); ok {
+			stack.Push(eventToPack(event))
+		} else {
+			stack.Push(VMDataObject{Type: NIL})
+		}
 	}
 }
