@@ -303,25 +303,52 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 }
 
 func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
-	c.compileExpr(node.Condition)
-	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
+	// Attempt to compile for combined compare-and-jump optimization
+	if infix, ok := node.Condition.(*parser.InfixExpression); ok {
+		jumpOp := c.getJumpOpForInfix(infix.Operator)
+		if jumpOp != 0 {
+			c.compileExpr(infix.Left)
+			c.compileExpr(infix.Right)
 
-	if len(node.Consequence.Statements) == 0 {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+			jmpIfFalsePos := c.emitWithPlaceholder(jumpOp)
+
+			if len(node.Consequence.Statements) != 0 {
+				c.compileStmt(node.Consequence, true)
+			}
+
+			jmpPos := c.emitWithPlaceholder(runtime.OpJmp)
+			c.patchJump(jmpIfFalsePos)
+
+			if node.Alternative != nil {
+				c.compileStmt(node.Alternative, true)
+			}
+
+			c.patchJump(jmpPos)
+			return
+		} else {
+			panic(fmt.Sprintf("Unsupported infix operator in if condition: %s", infix.Operator))
+		}
 	} else {
-		c.compileStmt(node.Consequence, true)
+		panic("If condition is not an infix expression")
 	}
+}
 
-	jmpPos := c.emitWithPlaceholder(runtime.OpJmp)
-	c.patchJump(jmpIfFalsePos)
-
-	if node.Alternative == nil {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
-	} else {
-		c.compileStmt(node.Alternative, true)
+func (c *Compiler) getJumpOpForInfix(op string) runtime.VMOp {
+	switch op {
+	case "==":
+		return runtime.OpJmpIfNeq // Jump if NOT equal
+	case "!=":
+		return runtime.OpJmpIfEq // Jump if equal
+	case ">":
+		return runtime.OpJmpIfLte // Jump if NOT greater than (less than or equal)
+	case "<":
+		return runtime.OpJmpIfGte // Jump if NOT less than (greater than or equal)
+	case ">=":
+		return runtime.OpJmpIfLt // Jump if less than
+	case "<=":
+		return runtime.OpJmpIfGt // Jump if greater than
 	}
-
-	c.patchJump(jmpPos)
+	return 0
 }
 
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
@@ -423,6 +450,30 @@ func (c *Compiler) compileLoopStatement(node *parser.LoopStatement) {
 	loopStart := len(c.instructions)
 	c.pushLoopContext(loopStart)
 
+	// Attempt to compile for combined compare-and-jump optimization
+	if infix, ok := node.Condition.(*parser.InfixExpression); ok {
+		jumpOp := c.getJumpOpForInfix(infix.Operator)
+		if jumpOp != 0 {
+			c.compileExpr(infix.Left)
+			c.compileExpr(infix.Right)
+
+			jmpIfFalsePos := c.emitWithPlaceholder(jumpOp)
+
+			c.enterScope()
+			c.compileStmt(node.Body, false)
+			c.leaveScope()
+
+			c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(loopStart)})
+
+			loopEnd := len(c.instructions)
+			c.patchJump(jmpIfFalsePos)
+			c.patchBreaks(loopEnd)
+			c.popLoopContext()
+			return
+		}
+	}
+
+	// Fallback for single values or non-optimizable expressions
 	c.compileExpr(node.Condition)
 	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
 

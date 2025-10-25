@@ -349,6 +349,12 @@ const (
 	OpCmpLte
 	OpJmp
 	OpJmpIfFalse
+	OpJmpIfEq
+	OpJmpIfNeq
+	OpJmpIfGt
+	OpJmpIfLt
+	OpJmpIfGte
+	OpJmpIfLte
 	OpCstInt
 	OpCstReal
 	OpCstStr

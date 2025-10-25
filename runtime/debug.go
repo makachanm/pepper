@@ -50,6 +50,10 @@ func ResolveVMInstruction(instr VMInstr) string {
 		opCode = "OpStoreGlobal"
 	case OpLoadGlobal:
 		opCode = "OpLoadGlobal"
+	case OpStoreLocal:
+		opCode = "OpStoreLocal"
+	case OpLoadLocal:
+		opCode = "OpLoadLocal"
 	case OpDefFunc:
 		opCode = "OpDefFunc"
 	case OpCall:
@@ -90,6 +94,18 @@ func ResolveVMInstruction(instr VMInstr) string {
 		opCode = "OpJmp"
 	case OpJmpIfFalse:
 		opCode = "OpJmpIfFalse"
+	case OpJmpIfEq:
+		opCode = "OpJmpIfEq"
+	case OpJmpIfNeq:
+		opCode = "OpJmpIfNeq"
+	case OpJmpIfGt:
+		opCode = "OpJmpIfGt"
+	case OpJmpIfLt:
+		opCode = "OpJmpIfLt"
+	case OpJmpIfGte:
+		opCode = "OpJmpIfGte"
+	case OpJmpIfLte:
+		opCode = "OpJmpIfLte"
 	case OpCstInt:
 		opCode = "OpCstInt"
 	case OpCstReal:
