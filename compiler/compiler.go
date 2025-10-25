@@ -312,25 +312,48 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 
 			jmpIfFalsePos := c.emitWithPlaceholder(jumpOp)
 
-			if len(node.Consequence.Statements) != 0 {
+			// Consequence
+			if len(node.Consequence.Statements) == 0 {
+				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+			} else {
 				c.compileStmt(node.Consequence, true)
 			}
 
-			jmpPos := c.emitWithPlaceholder(runtime.OpJmp)
+			jmpOverElsePos := c.emitWithPlaceholder(runtime.OpJmp)
 			c.patchJump(jmpIfFalsePos)
 
-			if node.Alternative != nil {
+			// Alternative
+			if node.Alternative == nil {
+				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+			} else {
 				c.compileStmt(node.Alternative, true)
 			}
-
-			c.patchJump(jmpPos)
+			c.patchJump(jmpOverElsePos)
 			return
-		} else {
-			panic(fmt.Sprintf("Unsupported infix operator in if condition: %s", infix.Operator))
 		}
-	} else {
-		panic("If condition is not an infix expression")
 	}
+
+	// Fallback for non-optimizable expressions (like 'and', 'or', or single values)
+	c.compileExpr(node.Condition)
+	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
+
+	// Consequence
+	if len(node.Consequence.Statements) == 0 {
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+	} else {
+		c.compileStmt(node.Consequence, true)
+	}
+
+	jmpOverElsePos := c.emitWithPlaceholder(runtime.OpJmp)
+	c.patchJump(jmpIfFalsePos)
+
+	// Alternative
+	if node.Alternative == nil {
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+	} else {
+		c.compileStmt(node.Alternative, true)
+	}
+	c.patchJump(jmpOverElsePos)
 }
 
 func (c *Compiler) getJumpOpForInfix(op string) runtime.VMOp {

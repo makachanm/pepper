@@ -55,8 +55,6 @@ func main() {
 	vm.Run(debug)
 
 	if debug {
-		fmt.Println("Branch Profile:")
-		runtime.DumpBranchProfile(vm)
 		fmt.Println("Stack:")
 		runtime.DumpOperandStack(vm)
 		fmt.Println("Memory:")
