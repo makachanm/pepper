@@ -8,16 +8,21 @@
 dim SCREEN_W = 640
 dim SCREEN_H = 480
 
+dim ball_tex = load_sprite[`demo/res/golfball.png`]
+dim paddle_tex = load_sprite[`demo/res/paddle.png`]
+
+set_title[`Ping-Pong`] 
+
 dim paddle = [
   `w`: 120,
-  `h`: 16,
+  `h`: 32,
   `x`: 0,
   `y`: (SCREEN_H - 30)
 ]
 paddle->x = (SCREEN_W / 2) - (paddle->w / 2)
 
 dim ball = [
-  `r`: 10,
+  `r`: 30,
   `x`: 0,
   `y`: 0,
   `vx`: 5,
@@ -109,10 +114,11 @@ func draw_game[] then
     draw_text[(SCREEN_W/2 - 100) (SCREEN_H/2 + 30) `Press Any Key to Restart`]
   else then
     set_color[0 0 200]
-    draw_rect[paddle->x paddle->y paddle->w paddle->h]
+    draw_sprite[paddle_tex paddle->x paddle->y]
 
     set_color[200 200 0]
-    draw_circle[ball->x ball->y ball->r]
+    set_sprite_scale[ball_tex 0.6 0.6]
+    draw_sprite[ball_tex ball->x ball->y]
 
     set_color[255 255 255]
     set_font_size[20]

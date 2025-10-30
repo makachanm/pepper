@@ -5,7 +5,7 @@
 
 set_title[`Sprite Demo`]
 
-dim sprite = load_sprite[`demo/demo.png`]
+dim sprite = load_sprite[`demo/res/demo.png`]
 
 dim angle = 0
 dim scale = 0.7
