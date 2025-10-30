@@ -140,9 +140,9 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 	case *parser.RepeatStatement:
 		c.compileRepeatStatement(node)
 	case *parser.BreakStatement:
-		c.compileBreakStatement()
+		c.compileBreakStatement(node)
 	case *parser.ContinueStatement:
-		c.compileContinueStatement()
+		c.compileContinueStatement(node)
 
 	case *parser.IncludeStatement:
 		data, err := os.ReadFile(node.Filename)
@@ -163,11 +163,16 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 		}
 
 	default:
-		panic(fmt.Sprintf("Unsupported statement type: %T", stmt))
+		token := stmt.GetToken()
+		panic(fmt.Sprintf("line %d:%d: Unsupported statement type: %T", token.Line, token.Column, stmt))
 	}
 }
 
 func (c *Compiler) compileExpr(expr parser.Expression) {
+	if expr == nil {
+		fmt.Println("Warning: compileExpr called with nil expression, ", expr)
+		return
+	}
 	switch node := expr.(type) {
 	case *parser.InfixExpression:
 		c.compileInfixExpr(node)
@@ -200,7 +205,8 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.Identifier:
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {
-			panic(fmt.Sprintf("undefined variable: %s", node.Value))
+			token := node.GetToken()
+			panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, node.Value))
 		}
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
 		if symbol.Scope == GlobalScope {
@@ -211,7 +217,8 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.PackLiteral:
 		c.compilePackLiteral(node)
 	default:
-		panic(fmt.Sprintf("Unsupported expression type: %T", expr))
+		token := expr.GetToken()
+		panic(fmt.Sprintf("line %d:%d: Unsupported expression type: %T", token.Line, token.Column, expr))
 	}
 }
 
@@ -285,7 +292,8 @@ func (c *Compiler) compileInfixExpr(node *parser.InfixExpression) {
 	case "or":
 		c.emit(runtime.OpOr)
 	default:
-		panic(fmt.Sprintf("Unknown infix operator: %s", node.Operator))
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: Unknown infix operator: %s", token.Line, token.Column, node.Operator))
 	}
 }
 
@@ -298,7 +306,8 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: 0})
 		c.emit(runtime.OpSub)
 	default:
-		panic(fmt.Sprintf("Unknown prefix operator: %s", node.Operator))
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: Unknown prefix operator: %s", token.Line, token.Column, node.Operator))
 	}
 }
 
@@ -313,9 +322,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 			jmpIfFalsePos := c.emitWithPlaceholder(jumpOp)
 
 			// Consequence
-			if len(node.Consequence.Statements) == 0 {
-				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
-			} else {
+			if len(node.Consequence.Statements) != 0 {
 				c.compileStmt(node.Consequence, true)
 			}
 
@@ -323,9 +330,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 			c.patchJump(jmpIfFalsePos)
 
 			// Alternative
-			if node.Alternative == nil {
-				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
-			} else {
+			if node.Alternative != nil {
 				c.compileStmt(node.Alternative, true)
 			}
 			c.patchJump(jmpOverElsePos)
@@ -404,7 +409,8 @@ func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
 
 	ident, ok := node.Function.(*parser.Identifier)
 	if !ok {
-		panic("Calling non-identifier function is not supported yet")
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: Calling non-identifier function is not supported yet", token.Line, token.Column))
 	}
 
 	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
@@ -416,7 +422,8 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 		c.compileExpr(node.Value)
 		symbol, ok := c.symbolTable.Resolve(ident.Value)
 		if !ok {
-			panic(fmt.Sprintf("undefined variable: %s", ident.Value))
+			token := ident.GetToken()
+			panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
 		}
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
 		if symbol.Scope == GlobalScope {
@@ -433,7 +440,8 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 		if ident, ok := indexExpr.Left.(*parser.Identifier); ok {
 			symbol, ok := c.symbolTable.Resolve(ident.Value)
 			if !ok {
-				panic(fmt.Sprintf("undefined variable: %s", ident.Value))
+				token := ident.GetToken()
+				panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
 			}
 			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
 			if symbol.Scope == GlobalScope {
@@ -453,7 +461,8 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 		if ident, ok := memberAccessExpr.Object.(*parser.Identifier); ok {
 			symbol, ok := c.symbolTable.Resolve(ident.Value)
 			if !ok {
-				panic(fmt.Sprintf("undefined variable: %s", ident.Value))
+				token := ident.GetToken()
+				panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
 			}
 			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
 			if symbol.Scope == GlobalScope {
@@ -465,7 +474,8 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 			c.emit(runtime.OpPop)
 		}
 	} else {
-		panic(fmt.Sprintf("Assignment to this expression type is not supported: %T", node.Left))
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: Assignment to this expression type is not supported: %T", token.Line, token.Column, node.Left))
 	}
 }
 
@@ -515,7 +525,8 @@ func (c *Compiler) compileLoopStatement(node *parser.LoopStatement) {
 func (c *Compiler) compileRepeatStatement(node *parser.RepeatStatement) {
 	count, ok := node.Count.(*parser.IntegerLiteral)
 	if !ok {
-		panic("`repeat` currently only supports integer literals for the count.")
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: `repeat` currently only supports integer literals for the count.", token.Line, token.Column))
 	}
 
 	loopStart := len(c.instructions)
@@ -532,18 +543,20 @@ func (c *Compiler) compileRepeatStatement(node *parser.RepeatStatement) {
 	c.popLoopContext()
 }
 
-func (c *Compiler) compileBreakStatement() {
+func (c *Compiler) compileBreakStatement(node *parser.BreakStatement) {
 	if len(c.loopContexts) == 0 {
-		panic("'break' outside of a loop")
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: 'break' outside of a loop", token.Line, token.Column))
 	}
 	patchPos := c.emitWithPlaceholder(runtime.OpJmp)
 	currentLoop := c.loopContexts[len(c.loopContexts)-1]
 	currentLoop.breakPatches = append(currentLoop.breakPatches, patchPos)
 }
 
-func (c *Compiler) compileContinueStatement() {
+func (c *Compiler) compileContinueStatement(node *parser.ContinueStatement) {
 	if len(c.loopContexts) == 0 {
-		panic("'continue' outside of a loop")
+		token := node.GetToken()
+		panic(fmt.Sprintf("line %d:%d: 'continue' outside of a loop", token.Line, token.Column))
 	}
 	currentLoop := c.loopContexts[len(c.loopContexts)-1]
 	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(currentLoop.startPos)})

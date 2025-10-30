@@ -585,7 +585,7 @@ func (p *Parser) registerInfix(tokenType lexer.TokenType, fn infixParseFn) {
 }
 
 func (p *Parser) noPrefixParseFnError(t lexer.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	msg := fmt.Sprintf("line %d:%d: no prefix parse function for %s found", p.curToken.Line, p.curToken.Column, t)
 	p.errors = append(p.errors, msg)
 }
 
