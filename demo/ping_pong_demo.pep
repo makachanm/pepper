@@ -49,7 +49,7 @@ func handle_input[e] then
     return nil
   end
 
-  if [e->type == `mouse_motion`] then
+  if [e->type == `mouse_motion` and game->game_over == 0] then
     paddle->x = e->x - (paddle->w / 2)
     if [paddle->x < 0] then
       paddle->x = 0
@@ -91,6 +91,8 @@ func update_game[] then
 
   if [(ball->y - ball->r) >= SCREEN_H] then
     game->game_over = 1 
+    println[`Game Over`]
+    println[`Final Score: ` + game->score]
   end
 end
 
@@ -104,8 +106,8 @@ func draw_game[] then
     draw_text[(SCREEN_W/2 - 100) (SCREEN_H/2 - 50) `GAME OVER`]
     set_font_size[16]
     draw_text[(SCREEN_W/2 - 120) (SCREEN_H/2) (`Final Score: ` + game->score)]
-    draw_text[(SCREEN_W/2 - 100) (SCREEN_H/2 + 30) `Click to Restart`]
-  else
+    draw_text[(SCREEN_W/2 - 100) (SCREEN_H/2 + 30) `Press Any Key to Restart`]
+  else then
     set_color[0 0 200]
     draw_rect[paddle->x paddle->y paddle->w paddle->h]
 
