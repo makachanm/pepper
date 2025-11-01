@@ -8,6 +8,7 @@ import (
 	"pepper/lexer"
 	"pepper/parser"
 	"pepper/runtime"
+	"pepper/utils"
 	"sync"
 )
 
@@ -16,9 +17,21 @@ const version = "0.2.0"
 func main() {
 	var debug bool
 	var showVersion bool
+	var dump string
+	var exec string
+	var human string
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: pepper [options] <file>\n")
+		fmt.Fprintf(os.Stderr, "Options:\n")
+		flag.PrintDefaults()
+	}
 
 	flag.BoolVar(&debug, "d", false, "enable debug mode")
 	flag.BoolVar(&showVersion, "v", false, "show version information")
+	flag.StringVar(&dump, "p", "", "dump bytecode to file")
+	flag.StringVar(&exec, "e", "", "execute bytecode from file")
+	flag.StringVar(&human, "h", "", "view dumped bytecode")
 	flag.Parse()
 
 	if showVersion {
@@ -26,10 +39,43 @@ func main() {
 		return
 	}
 
-	if len(flag.Args()) != 1 {
-		fmt.Println("Usage: pepper [-d] [-v] <file>")
-		os.Exit(1)
+	if human != "" {
+		data, err := os.ReadFile(human)
+		if err != nil {
+			panic(err)
+		}
+
+		instrs, err := utils.DecodeBytecode(data)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Instructions:")
+		for i, instr := range instrs {
+			fmt.Printf("%04d %s\n", i, runtime.ResolveVMInstruction(instr))
+		}
+		return
 	}
+
+	if exec != "" {
+		data, err := os.ReadFile(exec)
+		if err != nil {
+			panic(err)
+		}
+
+		instrs, err := utils.DecodeBytecode(data)
+		if err != nil {
+			panic(err)
+		}
+
+		var wg sync.WaitGroup
+		vm := runtime.NewVM(instrs, &wg)
+		vm.Run(debug)
+		wg.Wait()
+		return
+	}
+
+
 
 	filePath := flag.Arg(0)
 	data, err := os.ReadFile(filePath)
@@ -42,6 +88,18 @@ func main() {
 
 	program := p.ParseProgram()
 	comp := compiler.NewCompiler().Compile(program, false)
+
+	if dump != "" {
+		encoded, err := utils.EncodeBytecode(comp)
+		if err != nil {
+			panic(err)
+		}
+		err = os.WriteFile(dump, encoded, 0644)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
 
 	if debug {
 		fmt.Println("Instructions:")

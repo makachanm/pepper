@@ -39,12 +39,4 @@ func PurgeVMMEM(mem *VMMEMObjectTable, vm *VM) {
 			mem.DeallocateObj(key)
 		}
 	}
-
-	// Also, perform a safer stack truncation. If the stack is very large,
-	// it's good to shrink it to avoid holding onto old return values for too long.
-	if len(vm.OperandStack.GetStack()) > 2048 {
-		// Keep the top 256 values, which are likely return values from recent functions.
-		stack := vm.OperandStack.GetStack()
-		vm.OperandStack.stack = stack[len(stack)-256:]
-	}
 }
