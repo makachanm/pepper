@@ -144,5 +144,14 @@ func doSyscallMath(v VM, code int64) {
 		}
 		res := math.Atan2(y, x)
 		v.OperandStack.Push(makeRealValueObj(res))
+	case 113: // deg2rad
+		val := v.OperandStack.Pop()
+		var res float64
+		if val.Type == REAL {
+			res = val.Value.(float64) * (math.Pi / 180)
+		} else if val.Type == INTGER {
+			res = float64(val.Value.(int64)) * (math.Pi / 180)
+		}
+		v.OperandStack.Push(makeRealValueObj(res))
 	}
 }

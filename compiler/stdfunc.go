@@ -31,6 +31,7 @@ func (c *Compiler) defineStandardFunctions() {
 		"acos":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(110)}}},
 		"atan":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(111)}}},
 		"atan2": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(112)}}},
+		"deg2rad": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(113)}}},
 
 		// String
 		"strlen":         {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(200)}}},
@@ -92,5 +93,12 @@ func (c *Compiler) defineStandardFunctions() {
 
 		// Time
 		"sleep": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(600)}}},
+		"now": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(601)}}},
+		"year": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(602)}}},
+		"month": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(603)}}},
+		"day": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(604)}}},
+		"hour": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(605)}}},
+		"minute": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(606)}}},
+		"second": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(607)}}},
 	}
 }

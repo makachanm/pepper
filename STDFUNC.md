@@ -241,6 +241,48 @@ dim p = json_parse[json_str]
 sleep[1000] /* 1초 동안 대기 */
 ```
 
+#### now
+`now` 함수는 현재 시간을 유닉스 타임스탬프 (초) 로 반환합니다.
+```
+dim current_time = now[]
+```
+
+#### year
+`year` 함수는 현재 년도를 반환합니다.
+```
+dim current_year = year[]
+```
+
+#### month
+`month` 함수는 현재 월을 반환합니다.
+```
+dim current_month = month[]
+```
+
+#### day
+`day` 함수는 현재 일을 반환합니다.
+```
+dim current_day = day[]
+```
+
+#### hour
+`hour` 함수는 현재 시간을 반환합니다.
+```
+dim current_hour = hour[]
+```
+
+#### minute
+`minute` 함수는 현재 분을 반환합니다.
+```
+dim current_minute = minute[]
+```
+
+#### second
+`second` 함수는 현재 초를 반환합니다.
+```
+dim current_second = second[]
+```
+
 ### 그래픽스 (Graphics)
 
 #### clear
