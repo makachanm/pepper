@@ -9,6 +9,7 @@ true/false         (bool)
 func [foo] ... end (function)
 [ i: 34, j: 6.34 ] (pack)
 nil                (nil)
+func a:            (function alias)
 ```
 
 ### COMMENT
@@ -19,6 +20,7 @@ Pack은 일종의 Key-Value 맵과 같다. 모든 값은 키를 가지고 있다
 int, real, str만 키로써 사용될 수 있으며, 키는 중복될수 없고 모두 unique해야 한다. 
 
 value는 오직 int, real, str, bool, pack만 허용되며, function과 nil은 허용되지 않는다.
+단, function은 function alias 형태로 들어갈 수 있다.
 ```
 example: simple number array in pack
 [ 1: 5, 2: 7, 3: 9, 4: 11 ]
@@ -103,7 +105,7 @@ not  (not operation)
 ```
 
 ### CONDITIONAL BRANCH CONTROL STATEMENTS
-if-elif-else 구조의 흐름은 키워드의 다음으로 주어진 표현식의 값을 통해 정해지며, 표현식의 값은 무조건 bool 값이여야만 한다. 표현식은 대괄호`[]`로 감싸야 하며, 대괄호 안에 감싸진 표현식에 따라 if와 elif의 흐름이 결정된다.
+if-else 구조의 흐름은 키워드의 다음으로 주어진 표현식의 값을 통해 정해지며, 표현식의 값은 무조건 bool 값이여야만 한다. 표현식은 대괄호`[]`로 감싸야 하며, 대괄호 안에 감싸진 표현식에 따라 if와 elif의 흐름이 결정된다.
 ```
 if [a > b] then
     (some code...)
@@ -130,7 +132,7 @@ end
 break와 continue는 loop와 repeat를 제어할 수 있으며, break는 반복문을 종료시킨 후 스코프에서 탈출시키며, continue는 다음 표현식의 실행을 중지하고 다시 반복문의 첫 표현식으로 돌아간다.
 
 ### FUNCTIONS
-함수는 표현식들의 집합이다. 함수는 이름과 인자를 가질 수 있으며, 반환값을 가질 수 있다. 인자는 `[]`대괄호로 감싸야 하며, 인자들은 모두 해당 스코프 내에서만 접근할 수 있게 된다. 만일 함수의 마지막 반환값이 없다면 함수는 `nil`을 반환하게 된다.
+함수는 표현식들의 집합이다. 함수는 이름과 인자를 가질 수 있으며, 반환값을 가질 수 있다. 인자는 `[]`대괄호로 감싸야 하며, 인자들은 모두 해당 스코프 내에서만 접근할 수 있게 된다. 만일 함수의 마지막 반환값이 없다면 함수는 `nil`을 반환해야 한다.
 ```
 func foo [fizz buzz] then
     return fizz + buzz
@@ -152,6 +154,9 @@ examplepack->fizz = `spam`
 examplepack|`fizz`|
 ```
 이때, 특수 문법으로 접근한 Key는 일종의 독립적인 Variable로 취급된다.
+
+function alias에 대한 정의는 해당 function name을 마지막 caller 없이 호출하였을때 작용한다.
+function alias를 가지고 있을 경우, 해당 변수명에 caller를 붙여 function을 호출할 수 있다.
 
 ### INCLUDE
 Include는 외부 소스 파일을 추가할때 사용된다. 해당 문법을 통하여 상대 경로에 있는 외부 소스 파일을 추가할 수 있다.

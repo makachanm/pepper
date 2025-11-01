@@ -16,10 +16,18 @@ const (
 	LocalScope  SymbolScope = "LOCAL"
 )
 
+type SymbolType int
+
+const (
+	VarSymbol SymbolType = iota
+	FuncSymbol
+)
+
 type Symbol struct {
 	Name  string
 	Scope SymbolScope
 	Index int
+	Type  SymbolType
 }
 
 type SymbolTable struct {
@@ -39,8 +47,8 @@ func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
 	return s
 }
 
-func (s *SymbolTable) Define(name string) Symbol {
-	symbol := Symbol{Name: name, Index: s.numDefinitions}
+func (s *SymbolTable) DefineVar(name string) Symbol {
+	symbol := Symbol{Name: name, Index: s.numDefinitions, Type: VarSymbol}
 	if s.Outer == nil {
 		symbol.Scope = GlobalScope
 	} else {
@@ -48,6 +56,12 @@ func (s *SymbolTable) Define(name string) Symbol {
 	}
 	s.store[name] = symbol
 	s.numDefinitions++
+	return symbol
+}
+
+func (s *SymbolTable) DefineFunc(name string) Symbol {
+	symbol := Symbol{Name: name, Index: -1, Type: FuncSymbol, Scope: GlobalScope} // Functions are global
+	s.store[name] = symbol
 	return symbol
 }
 
@@ -94,6 +108,9 @@ func (c *Compiler) leaveScope() {
 func (c *Compiler) Compile(program *parser.Program, excludestd bool) []runtime.VMInstr {
 	if !excludestd {
 		c.defineStandardFunctions()
+		for name := range c.standardFunctionMaps {
+			c.symbolTable.DefineFunc(name)
+		}
 		for name, instrs := range c.standardFunctionMaps {
 			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpDefFunc, Oprand1: runtime.VMDataObject{Type: runtime.STRING, Value: name}})
 			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpJmp, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(len(c.instructions)) + 3}})
@@ -116,9 +133,6 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 	switch node := stmt.(type) {
 	case *parser.ExpressionStatement:
 		c.compileExpr(node.Expression)
-
-	case *parser.LetStatement:
-		c.compileLetStatement(node)
 	case *parser.DimStatement:
 		c.compileDimStatement(node)
 	case *parser.ReturnStatement:
@@ -206,13 +220,19 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {
 			token := node.GetToken()
-			panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, node.Value))
+			panic(fmt.Sprintf("line %d:%d: undefined identifier: %s", token.Line, token.Column, node.Value))
 		}
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
-		if symbol.Scope == GlobalScope {
-			c.emit(runtime.OpLoadGlobal)
-		} else {
-			c.emit(runtime.OpLoadLocal)
+
+		switch symbol.Type {
+		case FuncSymbol:
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.FUNCTION_ALIAS, Value: symbol.Name})
+		case VarSymbol:
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
+			if symbol.Scope == GlobalScope {
+				c.emit(runtime.OpLoadGlobal)
+			} else {
+				c.emit(runtime.OpLoadLocal)
+			}
 		}
 	case *parser.PackLiteral:
 		c.compilePackLiteral(node)
@@ -234,24 +254,13 @@ func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 	}
 }
 
-func (c *Compiler) compileLetStatement(node *parser.LetStatement) {
-	c.compileExpr(node.Value)
-	symbol := c.symbolTable.Define(node.Name.Value)
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
-	if symbol.Scope == GlobalScope {
-		c.emit(runtime.OpStoreGlobal)
-	} else {
-		c.emit(runtime.OpStoreLocal)
-	}
-}
-
 func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
 	if node.Value == nil {
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil}) // Push nil
 	} else {
 		c.compileExpr(node.Value)
 	}
-	symbol := c.symbolTable.Define(node.Name.Value)
+	symbol := c.symbolTable.DefineVar(node.Name.Value)
 	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 	if symbol.Scope == GlobalScope {
 		c.emit(runtime.OpStoreGlobal)
@@ -380,6 +389,7 @@ func (c *Compiler) getJumpOpForInfix(op string) runtime.VMOp {
 }
 
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
+	c.symbolTable.DefineFunc(node.Name.Value)
 	c.emit(runtime.OpDefFunc, runtime.VMDataObject{Type: runtime.STRING, Value: node.Name.Value})
 	jumpPos := c.emitWithPlaceholder(runtime.OpJmp)
 
@@ -387,7 +397,7 @@ func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 
 	for i := len(node.Parameters) - 1; i >= 0; i-- {
 		pname := node.Parameters[i]
-		c.symbolTable.Define(pname.Value)
+		c.symbolTable.DefineVar(pname.Value)
 		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: pname.Value})
 		c.emit(runtime.OpStoreLocal)
 	}
@@ -407,13 +417,7 @@ func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
 		c.compileExpr(arg)
 	}
 
-	ident, ok := node.Function.(*parser.Identifier)
-	if !ok {
-		token := node.GetToken()
-		panic(fmt.Sprintf("line %d:%d: Calling non-identifier function is not supported yet", token.Line, token.Column))
-	}
-
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: ident.Value})
+	c.compileExpr(node.Function)
 	c.emit(runtime.OpCall)
 }
 

@@ -461,23 +461,37 @@ func (p *Parser) parsePackLiteral() Expression {
 
 	p.nextToken()
 
-	key := p.parseExpression(LOWEST)
+	// First pair
+	key := p.parsePackKeyExpression()
+	if key == nil {
+		return nil
+	}
 	if !p.expectPeek(lexer.COLON) {
 		return nil
 	}
 	p.nextToken()
 	value := p.parseExpression(LOWEST)
+	if !p.checkPackValue(value) {
+		return nil
+	}
 	pack.Pairs[key] = value
 
+	// Subsequent pairs
 	for p.peekTokenIs(lexer.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		key = p.parseExpression(LOWEST)
+		key = p.parsePackKeyExpression()
+		if key == nil {
+			return nil
+		}
 		if !p.expectPeek(lexer.COLON) {
 			return nil
 		}
 		p.nextToken()
 		value = p.parseExpression(LOWEST)
+		if !p.checkPackValue(value) {
+			return nil
+		}
 		pack.Pairs[key] = value
 	}
 
@@ -506,6 +520,35 @@ func (p *Parser) parseAssignmentExpression(left Expression) Expression {
 	expression.Value = p.parseExpression(precedence - 1)
 
 	return expression
+}
+
+func (p *Parser) checkPackValue(expr Expression) bool {
+	switch expr.(type) {
+	case *NilLiteral:
+		msg := fmt.Sprintf("line %d:%d: nil is not allowed as a value in a pack literal", expr.GetToken().Line, expr.GetToken().Column)
+		p.errors = append(p.errors, msg)
+		return false
+	case *FunctionLiteral:
+		msg := fmt.Sprintf("line %d:%d: function literal is not allowed as a value in a pack literal. Use a function alias.", expr.GetToken().Line, expr.GetToken().Column)
+		p.errors = append(p.errors, msg)
+		return false
+	}
+	return true
+}
+
+func (p *Parser) parsePackKeyExpression() Expression {
+	switch p.curToken.Type {
+	case lexer.INT:
+		return p.parseIntegerLiteral()
+	case lexer.REAL:
+		return p.parseRealLiteral()
+	case lexer.STRING:
+		return p.parseStringLiteral()
+	default:
+		msg := fmt.Sprintf("line %d:%d: invalid type for pack key: got %s, expected INT, REAL, or STRING", p.curToken.Line, p.curToken.Column, p.curToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
 }
 
 func (p *Parser) parseExpressionList(end lexer.TokenType) []Expression {

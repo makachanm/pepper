@@ -166,7 +166,18 @@ func handleDefFunc(v *VM) {
 }
 
 func handleCall(v *VM) {
-	funcName := v.OperandStack.Pop().Value.(string)
+	callee := v.OperandStack.Pop()
+	var funcName string
+
+	switch callee.Type {
+	case STRING: // Direct call by name
+		funcName = callee.Value.(string)
+	case FUNCTION_ALIAS:
+		funcName = callee.Value.(string)
+	default:
+		panic("Cannot call a non-function")
+	}
+
 	function := v.Memory.GetFunc(funcName)
 
 	v.CallStack.Push(CallStackObject{PC: v.PC, Name: v.curruntFunctionName})

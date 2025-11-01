@@ -14,6 +14,7 @@ const (
 	BOOLEAN
 	PACK
 	NIL
+	FUNCTION_ALIAS
 )
 
 type PackKey struct {
@@ -113,6 +114,8 @@ func (d VMDataObject) String() string {
 		}
 		builder.WriteString("]")
 		return builder.String()
+	case FUNCTION_ALIAS:
+		return "func " + d.Value.(string) + ":"
 	default:
 		return "nil"
 	}
