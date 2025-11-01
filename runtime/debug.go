@@ -131,27 +131,36 @@ func ResolveVMInstruction(instr VMInstr) string {
 }
 
 func formatVMDataObject(obj VMDataObject) string {
+	if obj.Value == nil {
+		return "EMPTY"
+	}
 	switch obj.Type {
 	case INTGER:
-		return fmt.Sprintf("INT(%d)", obj.IntData)
+		return fmt.Sprintf("INT(%d)", obj.Value.(int64))
 	case REAL:
-		return fmt.Sprintf("REAL(%f)", obj.FloatData)
+		return fmt.Sprintf("REAL(%f)", obj.Value.(float64))
 	case STRING:
-		if obj.StringData == "\n" {
-			return fmt.Sprintf("STR(%s)", "newline")
+		// Special handling for newline to avoid breaking the line
+		strVal := obj.Value.(string)
+		if strVal == "\n" {
+			return "STR(newline)"
 		}
-		return fmt.Sprintf("STR(%s)", obj.StringData)
+		return fmt.Sprintf("STR(%s)", strVal)
 	case BOOLEAN:
-		return fmt.Sprintf("BOOL(%t)", obj.BoolData)
+		return fmt.Sprintf("BOOL(%t)", obj.Value.(bool))
 	case PACK:
+		packData, ok := obj.Value.(map[PackKey]VMDataObject)
+		if !ok {
+			return "PACK(invalid)"
+		}
 		var builder strings.Builder
 		builder.WriteString("PACK([")
 		i := 0
-		for k, v := range obj.PackData {
+		for k, v := range packData {
 			builder.WriteString(k.String())
 			builder.WriteString(": ")
 			builder.WriteString(formatVMDataObject(v))
-			if i < len(obj.PackData)-1 {
+			if i < len(packData)-1 {
 				builder.WriteString(", ")
 			}
 			i++

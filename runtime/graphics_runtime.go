@@ -17,15 +17,15 @@ func GfxResize(stack *OperandStack) {
 	var width, height int
 
 	if widthObj.Type == REAL {
-		width = int(widthObj.FloatData)
+		width = int(widthObj.Value.(float64))
 	} else {
-		width = int(widthObj.IntData)
+		width = int(widthObj.Value.(int64))
 	}
 
 	if heightObj.Type == REAL {
-		height = int(heightObj.FloatData)
+		height = int(heightObj.Value.(float64))
 	} else {
-		height = int(heightObj.IntData)
+		height = int(heightObj.Value.(int64))
 	}
 
 	Gfx.Resize(width, height)
@@ -33,16 +33,16 @@ func GfxResize(stack *OperandStack) {
 
 func GfxGetWidth(stack *OperandStack) {
 	width, _ := Gfx.GetDimensions()
-	stack.Push(VMDataObject{Type: INTGER, IntData: int64(width)})
+	stack.Push(makeIntValueObj(int64(width)))
 }
 
 func GfxGetHeight(stack *OperandStack) {
 	_, height := Gfx.GetDimensions()
-	stack.Push(VMDataObject{Type: INTGER, IntData: int64(height)})
+	stack.Push(makeIntValueObj(int64(height)))
 }
 
 func GfxSetWindowTitle(stack *OperandStack) {
-	title := stack.Pop().StringData
+	title := stack.Pop().Value.(string)
 	Gfx.SetWindowTitle(title)
 }
 
@@ -58,21 +58,21 @@ func GfxSetSourceRGB(stack *OperandStack) {
 	var r, g, b float64
 
 	if rObj.Type == REAL {
-		r = rObj.FloatData
+		r = rObj.Value.(float64)
 	} else {
-		r = float64(rObj.IntData) / 255.0
+		r = float64(rObj.Value.(int64)) / 255.0
 	}
 
 	if gObj.Type == REAL {
-		g = gObj.FloatData
+		g = gObj.Value.(float64)
 	} else {
-		g = float64(gObj.IntData) / 255.0
+		g = float64(gObj.Value.(int64)) / 255.0
 	}
 
 	if bObj.Type == REAL {
-		b = bObj.FloatData
+		b = bObj.Value.(float64)
 	} else {
-		b = float64(bObj.IntData) / 255.0
+		b = float64(bObj.Value.(int64)) / 255.0
 	}
 
 	Gfx.SetSourceRGB(r, g, b)
@@ -87,27 +87,27 @@ func GfxDrawRect(stack *OperandStack) {
 	var x, y, width, height int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	if widthObj.Type == REAL {
-		width = int(widthObj.FloatData)
+		width = int(widthObj.Value.(float64))
 	} else {
-		width = int(widthObj.IntData)
+		width = int(widthObj.Value.(int64))
 	}
 
 	if heightObj.Type == REAL {
-		height = int(heightObj.FloatData)
+		height = int(heightObj.Value.(float64))
 	} else {
-		height = int(heightObj.IntData)
+		height = int(heightObj.Value.(int64))
 	}
 
 	Gfx.DrawRect(x, y, width, height)
@@ -120,15 +120,15 @@ func GfxDrawDot(stack *OperandStack) {
 	var x, y int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	Gfx.DrawDot(x, y)
@@ -142,21 +142,21 @@ func GfxDrawCircle(stack *OperandStack) {
 	var x, y, radius int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	if radiusObj.Type == REAL {
-		radius = int(radiusObj.FloatData)
+		radius = int(radiusObj.Value.(float64))
 	} else {
-		radius = int(radiusObj.IntData)
+		radius = int(radiusObj.Value.(int64))
 	}
 
 	Gfx.DrawCircle(x, y, radius)
@@ -171,27 +171,27 @@ func GfxDrawLine(stack *OperandStack) {
 	var x1, y1, x2, y2 int
 
 	if x1Obj.Type == REAL {
-		x1 = int(x1Obj.FloatData)
+		x1 = int(x1Obj.Value.(float64))
 	} else {
-		x1 = int(x1Obj.IntData)
+		x1 = int(x1Obj.Value.(int64))
 	}
 
 	if y1Obj.Type == REAL {
-		y1 = int(y1Obj.FloatData)
+		y1 = int(y1Obj.Value.(float64))
 	} else {
-		y1 = int(y1Obj.IntData)
+		y1 = int(y1Obj.Value.(int64))
 	}
 
 	if x2Obj.Type == REAL {
-		x2 = int(x2Obj.FloatData)
+		x2 = int(x2Obj.Value.(float64))
 	} else {
-		x2 = int(x2Obj.IntData)
+		x2 = int(x2Obj.Value.(int64))
 	}
 
 	if y2Obj.Type == REAL {
-		y2 = int(y2Obj.FloatData)
+		y2 = int(y2Obj.Value.(float64))
 	} else {
-		y2 = int(y2Obj.IntData)
+		y2 = int(y2Obj.Value.(int64))
 	}
 
 	Gfx.DrawLine(x1, y1, x2, y2)
@@ -208,39 +208,39 @@ func GfxDrawTriangle(stack *OperandStack) {
 	var x1, y1, x2, y2, x3, y3 int
 
 	if x1Obj.Type == REAL {
-		x1 = int(x1Obj.FloatData)
+		x1 = int(x1Obj.Value.(float64))
 	} else {
-		x1 = int(x1Obj.IntData)
+		x1 = int(x1Obj.Value.(int64))
 	}
 
 	if y1Obj.Type == REAL {
-		y1 = int(y1Obj.FloatData)
+		y1 = int(y1Obj.Value.(float64))
 	} else {
-		y1 = int(y1Obj.IntData)
+		y1 = int(y1Obj.Value.(int64))
 	}
 
 	if x2Obj.Type == REAL {
-		x2 = int(x2Obj.FloatData)
+		x2 = int(x2Obj.Value.(float64))
 	} else {
-		x2 = int(x2Obj.IntData)
+		x2 = int(x2Obj.Value.(int64))
 	}
 
 	if y2Obj.Type == REAL {
-		y2 = int(y2Obj.FloatData)
+		y2 = int(y2Obj.Value.(float64))
 	} else {
-		y2 = int(y2Obj.IntData)
+		y2 = int(y2Obj.Value.(int64))
 	}
 
 	if x3Obj.Type == REAL {
-		x3 = int(x3Obj.FloatData)
+		x3 = int(x3Obj.Value.(float64))
 	} else {
-		x3 = int(x3Obj.IntData)
+		x3 = int(x3Obj.Value.(int64))
 	}
 
 	if y3Obj.Type == REAL {
-		y3 = int(y3Obj.FloatData)
+		y3 = int(y3Obj.Value.(float64))
 	} else {
-		y3 = int(y3Obj.IntData)
+		y3 = int(y3Obj.Value.(int64))
 	}
 
 	Gfx.DrawTriangle(x1, y1, x2, y2, x3, y3)
@@ -259,80 +259,80 @@ func GfxDrawBezier(stack *OperandStack) {
 	var x1, y1, x2, y2, x3, y3, x4, y4 int
 
 	if x1Obj.Type == REAL {
-		x1 = int(x1Obj.FloatData)
+		x1 = int(x1Obj.Value.(float64))
 	} else {
-		x1 = int(x1Obj.IntData)
+		x1 = int(x1Obj.Value.(int64))
 	}
 
 	if y1Obj.Type == REAL {
-		y1 = int(y1Obj.FloatData)
+		y1 = int(y1Obj.Value.(float64))
 	} else {
-		y1 = int(y1Obj.IntData)
+		y1 = int(y1Obj.Value.(int64))
 	}
 
 	if x2Obj.Type == REAL {
-		x2 = int(x2Obj.FloatData)
+		x2 = int(x2Obj.Value.(float64))
 	} else {
-		x2 = int(x2Obj.IntData)
+		x2 = int(x2Obj.Value.(int64))
 	}
 
 	if y2Obj.Type == REAL {
-		y2 = int(y2Obj.FloatData)
+		y2 = int(y2Obj.Value.(float64))
 	} else {
-		y2 = int(y2Obj.IntData)
+		y2 = int(y2Obj.Value.(int64))
 	}
 
 	if x3Obj.Type == REAL {
-		x3 = int(x3Obj.FloatData)
+		x3 = int(x3Obj.Value.(float64))
 	} else {
-		x3 = int(x3Obj.IntData)
+		x3 = int(x3Obj.Value.(int64))
 	}
 
 	if y3Obj.Type == REAL {
-		y3 = int(y3Obj.FloatData)
+		y3 = int(y3Obj.Value.(float64))
 	} else {
-		y3 = int(y3Obj.IntData)
+		y3 = int(y3Obj.Value.(int64))
 	}
 
 	if x4Obj.Type == REAL {
-		x4 = int(x4Obj.FloatData)
+		x4 = int(x4Obj.Value.(float64))
 	} else {
-		x4 = int(x4Obj.IntData)
+		x4 = int(x4Obj.Value.(int64))
 	}
 
 	if y4Obj.Type == REAL {
-		y4 = int(y4Obj.FloatData)
+		y4 = int(y4Obj.Value.(float64))
 	} else {
-		y4 = int(y4Obj.IntData)
+		y4 = int(y4Obj.Value.(int64))
 	}
 
 	Gfx.DrawBezier(x1, y1, x2, y2, x3, y3, x4, y4)
 }
 
 func GfxDrawText(stack *OperandStack) {
-	text := stack.Pop().StringData
+	text := stack.Pop().Value.(string)
 	yObj := stack.Pop()
 	xObj := stack.Pop()
 
 	var x, y int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	Gfx.DrawText(x, y, text)
 }
 
 func GfxSetFontFace(stack *OperandStack) {
-	fontFace := stack.Pop().StringData
+	fontFace := stack.Pop().Value.(string)
 	Gfx.SetFontFace(fontFace)
 }
 
@@ -340,15 +340,15 @@ func GfxSetFontSize(stack *OperandStack) {
 	sizeObj := stack.Pop()
 	var size float64
 	if sizeObj.Type == REAL {
-		size = sizeObj.FloatData
+		size = sizeObj.Value.(float64)
 	} else {
-		size = float64(sizeObj.IntData)
+		size = float64(sizeObj.Value.(int64))
 	}
 	Gfx.SetFontSize(size)
 }
 
 func GfxSaveToFile(stack *OperandStack) {
-	filename := stack.Pop().StringData
+	filename := stack.Pop().Value.(string)
 	Gfx.SaveToFile(filename)
 }
 
@@ -360,9 +360,9 @@ func GfxSetLineWidth(stack *OperandStack) {
 	widthObj := stack.Pop()
 	var width float64
 	if widthObj.Type == REAL {
-		width = widthObj.FloatData
+		width = widthObj.Value.(float64)
 	} else {
-		width = float64(widthObj.IntData)
+		width = float64(widthObj.Value.(int64))
 	}
 	Gfx.SetLineWidth(width)
 }
@@ -384,27 +384,27 @@ func GfxPathRectangle(stack *OperandStack) {
 	var x, y, width, height int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	if widthObj.Type == REAL {
-		width = int(widthObj.FloatData)
+		width = int(widthObj.Value.(float64))
 	} else {
-		width = int(widthObj.IntData)
+		width = int(widthObj.Value.(int64))
 	}
 
 	if heightObj.Type == REAL {
-		height = int(heightObj.FloatData)
+		height = int(heightObj.Value.(float64))
 	} else {
-		height = int(heightObj.IntData)
+		height = int(heightObj.Value.(int64))
 	}
 
 	Gfx.PathRectangle(x, y, width, height)
@@ -418,21 +418,21 @@ func GfxPathCircle(stack *OperandStack) {
 	var x, y, radius int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	if radiusObj.Type == REAL {
-		radius = int(radiusObj.FloatData)
+		radius = int(radiusObj.Value.(float64))
 	} else {
-		radius = int(radiusObj.IntData)
+		radius = int(radiusObj.Value.(int64))
 	}
 
 	Gfx.PathCircle(x, y, radius)
@@ -445,15 +445,15 @@ func GfxPathMoveTo(stack *OperandStack) {
 	var x, y int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	Gfx.PathMoveTo(x, y)
@@ -466,15 +466,15 @@ func GfxPathLineTo(stack *OperandStack) {
 	var x, y int
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	Gfx.PathLineTo(x, y)
@@ -485,14 +485,14 @@ func GfxPathClose(stack *OperandStack) {
 }
 
 func GfxLoadSprite(stack *OperandStack) {
-	filename := stack.Pop().StringData
+	filename := stack.Pop().Value.(string)
 	id, err := Gfx.LoadSprite(filename)
 	if err != nil {
 		// How to handle errors? For now, push -1
-		stack.Push(VMDataObject{Type: INTGER, IntData: -1})
+		stack.Push(makeIntValueObj(-1))
 		return
 	}
-	stack.Push(VMDataObject{Type: INTGER, IntData: int64(id)})
+	stack.Push(makeIntValueObj(int64(id)))
 }
 
 func GfxCreateSprite(stack *OperandStack) {
@@ -502,28 +502,28 @@ func GfxCreateSprite(stack *OperandStack) {
 	var width, height int
 
 	if widthObj.Type == REAL {
-		width = int(widthObj.FloatData)
+		width = int(widthObj.Value.(float64))
 	} else {
-		width = int(widthObj.IntData)
+		width = int(widthObj.Value.(int64))
 	}
 
 	if heightObj.Type == REAL {
-		height = int(heightObj.FloatData)
+		height = int(heightObj.Value.(float64))
 	} else {
-		height = int(heightObj.IntData)
+		height = int(heightObj.Value.(int64))
 	}
 
 	id := Gfx.CreateSprite(width, height)
-	stack.Push(VMDataObject{Type: INTGER, IntData: int64(id)})
+	stack.Push(makeIntValueObj(int64(id)))
 }
 
 func GfxDestroySprite(stack *OperandStack) {
 	idObj := stack.Pop()
 	var id int
 	if idObj.Type == REAL {
-		id = int(idObj.FloatData)
+		id = int(idObj.Value.(float64))
 	} else {
-		id = int(idObj.IntData)
+		id = int(idObj.Value.(int64))
 	}
 	Gfx.DestroySprite(id)
 }
@@ -536,21 +536,21 @@ func GfxDrawSprite(stack *OperandStack) {
 	var x, y, id int
 
 	if idObj.Type == REAL {
-		id = int(idObj.FloatData)
+		id = int(idObj.Value.(float64))
 	} else {
-		id = int(idObj.IntData)
+		id = int(idObj.Value.(int64))
 	}
 
 	if xObj.Type == REAL {
-		x = int(xObj.FloatData)
+		x = int(xObj.Value.(float64))
 	} else {
-		x = int(xObj.IntData)
+		x = int(xObj.Value.(int64))
 	}
 
 	if yObj.Type == REAL {
-		y = int(yObj.FloatData)
+		y = int(yObj.Value.(float64))
 	} else {
-		y = int(yObj.IntData)
+		y = int(yObj.Value.(int64))
 	}
 
 	Gfx.DrawSprite(id, x, y)
@@ -564,15 +564,15 @@ func GfxSetSpriteRotation(stack *OperandStack) {
 	var angle float64
 
 	if idObj.Type == REAL {
-		id = int(idObj.FloatData)
+		id = int(idObj.Value.(float64))
 	} else {
-		id = int(idObj.IntData)
+		id = int(idObj.Value.(int64))
 	}
 
 	if angleObj.Type == REAL {
-		angle = angleObj.FloatData
+		angle = angleObj.Value.(float64)
 	} else {
-		angle = float64(angleObj.IntData)
+		angle = float64(angleObj.Value.(int64))
 	}
 
 	Gfx.SetSpriteRotation(id, angle)
@@ -587,21 +587,21 @@ func GfxSetSpriteScale(stack *OperandStack) {
 	var sx, sy float64
 
 	if idObj.Type == REAL {
-		id = int(idObj.FloatData)
+		id = int(idObj.Value.(float64))
 	} else {
-		id = int(idObj.IntData)
+		id = int(idObj.Value.(int64))
 	}
 
 	if sxObj.Type == REAL {
-		sx = sxObj.FloatData
+		sx = sxObj.Value.(float64)
 	} else {
-		sx = float64(sxObj.IntData)
+		sx = float64(sxObj.Value.(int64))
 	}
 
 	if syObj.Type == REAL {
-		sy = syObj.FloatData
+		sy = syObj.Value.(float64)
 	} else {
-		sy = float64(syObj.IntData)
+		sy = float64(syObj.Value.(int64))
 	}
 
 	Gfx.SetSpriteScale(id, sx, sy)

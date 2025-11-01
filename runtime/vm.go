@@ -121,7 +121,7 @@ func handlePop(v *VM) {
 }
 
 func handleStoreGlobal(v *VM) {
-	name := v.OperandStack.Pop().StringData
+	name := v.OperandStack.Pop().Value.(string)
 	val := v.OperandStack.Pop()
 	if !v.Memory.HasObj(name, "") {
 		v.Memory.MakeObj(name, "")
@@ -131,14 +131,14 @@ func handleStoreGlobal(v *VM) {
 }
 
 func handleLoadGlobal(v *VM) {
-	name := v.OperandStack.Pop().StringData
+	name := v.OperandStack.Pop().Value.(string)
 	val := v.Memory.GetObj(name, "")
 	v.OperandStack.Push(*val)
 	v.PC++
 }
 
 func handleStoreLocal(v *VM) {
-	name := v.OperandStack.Pop().StringData
+	name := v.OperandStack.Pop().Value.(string)
 	val := v.OperandStack.Pop()
 	if !v.Memory.HasObj(name, v.curruntFunctionName) {
 		v.Memory.MakeObj(name, v.curruntFunctionName)
@@ -148,7 +148,7 @@ func handleStoreLocal(v *VM) {
 }
 
 func handleLoadLocal(v *VM) {
-	name := v.OperandStack.Pop().StringData
+	name := v.OperandStack.Pop().Value.(string)
 	val := v.Memory.GetObj(name, v.curruntFunctionName)
 	v.OperandStack.Push(*val)
 	v.PC++
@@ -156,7 +156,7 @@ func handleLoadLocal(v *VM) {
 
 func handleDefFunc(v *VM) {
 	instr := v.Program[v.PC]
-	funcName := instr.Oprand1.StringData
+	funcName := instr.Oprand1.Value.(string)
 	funcObj := VMFunctionObject{
 		JumpPc: v.PC + 2,
 	}
@@ -166,7 +166,7 @@ func handleDefFunc(v *VM) {
 }
 
 func handleCall(v *VM) {
-	funcName := v.OperandStack.Pop().StringData
+	funcName := v.OperandStack.Pop().Value.(string)
 	function := v.Memory.GetFunc(funcName)
 
 	v.CallStack.Push(CallStackObject{PC: v.PC, Name: v.curruntFunctionName})
@@ -191,7 +191,7 @@ func handleReturn(v *VM) {
 
 func handleSyscall(v *VM) {
 	instr := v.Program[v.PC]
-	doSyscall(*v, instr.Oprand1.IntData)
+	doSyscall(*v, instr.Oprand1.Value.(int64))
 	v.PC++
 }
 
@@ -234,7 +234,7 @@ func handleAnd(v *VM) {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Type == BOOLEAN && right.Type == BOOLEAN {
-		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.BoolData && right.BoolData})
+		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.Value.(bool) && right.Value.(bool)})
 	}
 	v.PC++
 }
@@ -243,7 +243,7 @@ func handleOr(v *VM) {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Type == BOOLEAN && right.Type == BOOLEAN {
-		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.BoolData || right.BoolData})
+		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.Value.(bool) || right.Value.(bool)})
 	}
 	v.PC++
 }
@@ -251,7 +251,7 @@ func handleOr(v *VM) {
 func handleNot(v *VM) {
 	val := v.OperandStack.Pop()
 	if val.Type == BOOLEAN {
-		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: !val.BoolData})
+		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: !val.Value.(bool)})
 	}
 	v.PC++
 }
@@ -259,14 +259,14 @@ func handleNot(v *VM) {
 func handleCmpEq(v *VM) {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
-	v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.IsEqualTo(right)})
+	v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.IsEqualTo(right)})
 	v.PC++
 }
 
 func handleCmpNeq(v *VM) {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
-	v.OperandStack.Push(VMDataObject{Type: BOOLEAN, BoolData: left.IsNotEqualTo(right)})
+	v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.IsNotEqualTo(right)})
 	v.PC++
 }
 
@@ -300,14 +300,14 @@ func handleCmpLte(v *VM) {
 
 func handleJmp(v *VM) {
 	instr := v.Program[v.PC]
-	v.PC = int(instr.Oprand1.IntData)
+	v.PC = int(instr.Oprand1.Value.(int64))
 }
 
 func handleJmpIfFalse(v *VM) {
 	instr := v.Program[v.PC]
 	condition := v.OperandStack.Pop()
-	if condition.Type == BOOLEAN && !condition.BoolData {
-		v.PC = int(instr.Oprand1.IntData)
+	if condition.Type == BOOLEAN && !condition.Value.(bool) {
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -318,7 +318,7 @@ func handleJmpIfEq(v *VM) {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.IsEqualTo(right) {
-		v.PC = int(instr.Oprand1.IntData)
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -329,7 +329,7 @@ func handleJmpIfNeq(v *VM) {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.IsNotEqualTo(right) {
-		v.PC = int(instr.Oprand1.IntData)
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -339,8 +339,8 @@ func handleJmpIfGt(v *VM) {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
-	if left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }).BoolData {
-		v.PC = int(instr.Oprand1.IntData)
+	if left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }).Value.(bool) {
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -350,8 +350,8 @@ func handleJmpIfLt(v *VM) {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
-	if left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }).BoolData {
-		v.PC = int(instr.Oprand1.IntData)
+	if left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }).Value.(bool) {
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -361,8 +361,8 @@ func handleJmpIfGte(v *VM) {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
-	if left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }).BoolData {
-		v.PC = int(instr.Oprand1.IntData)
+	if left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }).Value.(bool) {
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -372,8 +372,8 @@ func handleJmpIfLte(v *VM) {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
-	if left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }).BoolData {
-		v.PC = int(instr.Oprand1.IntData)
+	if left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }).Value.(bool) {
+		v.PC = int(instr.Oprand1.Value.(int64))
 	} else {
 		v.PC++
 	}
@@ -404,49 +404,45 @@ func handleHlt(v *VM) {
 
 func handleIndex(v *VM) {
 	index := v.OperandStack.Pop()
-	pack := v.OperandStack.Pop()
-	if pack.Type != PACK || pack.PackData == nil {
-		v.OperandStack.Push(VMDataObject{}) // Push nil
+	packObj := v.OperandStack.Pop()
+	if packObj.Type != PACK || packObj.Value == nil {
+		v.OperandStack.Push(makeNilValueObj())
 		v.PC++
 		return
 	}
+	packData := packObj.Value.(map[PackKey]VMDataObject)
 	key := PackKey{
-		Type:       index.Type,
-		IntData:    index.IntData,
-		FloatData:  index.FloatData,
-		BoolData:   index.BoolData,
-		StringData: index.StringData,
+		Type:  index.Type,
+		Value: index.Value,
 	}
-	if val, ok := (pack.PackData)[key]; ok {
+	if val, ok := packData[key]; ok {
 		v.OperandStack.Push(val)
 	} else {
-		v.OperandStack.Push(VMDataObject{}) // Push nil
+		v.OperandStack.Push(makeNilValueObj())
 	}
 	v.PC++
 }
 
 func handleMakePack(v *VM) {
 	pack := make(map[PackKey]VMDataObject)
-	v.OperandStack.Push(VMDataObject{Type: PACK, PackData: pack})
+	v.OperandStack.Push(VMDataObject{Type: PACK, Value: pack})
 	v.PC++
 }
 
 func handleSetIndex(v *VM) {
 	value := v.OperandStack.Pop()
 	index := v.OperandStack.Pop()
-	pack := v.OperandStack.Pop()
-	if pack.Type != PACK || pack.PackData == nil {
+	packObj := v.OperandStack.Pop()
+	if packObj.Type != PACK || packObj.Value == nil {
 		v.PC++
 		return
 	}
+	packData := packObj.Value.(map[PackKey]VMDataObject)
 	key := PackKey{
-		Type:       index.Type,
-		IntData:    index.IntData,
-		FloatData:  index.FloatData,
-		BoolData:   index.BoolData,
-		StringData: index.StringData,
+		Type:  index.Type,
+		Value: index.Value,
 	}
-	(pack.PackData)[key] = value
-	v.OperandStack.Push(pack)
+	packData[key] = value
+	v.OperandStack.Push(packObj)
 	v.PC++
 }

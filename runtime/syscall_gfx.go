@@ -75,23 +75,23 @@ func doSyscallGfx(vmInstance VM, code int64) {
 
 func eventToPack(event Event) VMDataObject {
 	pack := make(map[PackKey]VMDataObject)
-	pack[PackKey{Type: STRING, StringData: "type"}] = VMDataObject{Type: STRING, StringData: string(event.Type)}
+	pack[PackKey{Type: STRING, Value: "type"}] = VMDataObject{Type: STRING, Value: string(event.Type)}
 
 	switch event.Type {
 	case EventTypeMouseMotion, EventTypeMouseButtonDown, EventTypeMouseButtonUp:
-		pack[PackKey{Type: STRING, StringData: "x"}] = VMDataObject{Type: INTGER, IntData: int64(event.X)}
-		pack[PackKey{Type: STRING, StringData: "y"}] = VMDataObject{Type: INTGER, IntData: int64(event.Y)}
+		pack[PackKey{Type: STRING, Value: "x"}] = VMDataObject{Type: INTGER, Value: int64(event.X)}
+		pack[PackKey{Type: STRING, Value: "y"}] = VMDataObject{Type: INTGER, Value: int64(event.Y)}
 	}
 
 	if event.Type == EventTypeMouseButtonDown || event.Type == EventTypeMouseButtonUp {
-		pack[PackKey{Type: STRING, StringData: "button"}] = VMDataObject{Type: INTGER, IntData: int64(event.Button)}
+		pack[PackKey{Type: STRING, Value: "button"}] = VMDataObject{Type: INTGER, Value: int64(event.Button)}
 	}
 
 	if event.Type == EventTypeKeyDown || event.Type == EventTypeKeyUp {
-		pack[PackKey{Type: STRING, StringData: "key_name"}] = VMDataObject{Type: STRING, StringData: event.KeyName}
+		pack[PackKey{Type: STRING, Value: "key_name"}] = VMDataObject{Type: STRING, Value: event.KeyName}
 	}
 
-	return VMDataObject{Type: PACK, PackData: pack}
+	return VMDataObject{Type: PACK, Value: pack}
 }
 
 func GfxWaitEvent(stack *OperandStack) {
@@ -101,6 +101,6 @@ func GfxWaitEvent(stack *OperandStack) {
 		if len(stack.stack) > 0 {
 			stack.Pop()
 		}
-		stack.Push(VMDataObject{Type: NIL})
+		stack.Push(makeNilValueObj())
 	}
 }

@@ -95,8 +95,8 @@ func (c *Compiler) Compile(program *parser.Program, excludestd bool) []runtime.V
 	if !excludestd {
 		c.defineStandardFunctions()
 		for name, instrs := range c.standardFunctionMaps {
-			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpDefFunc, Oprand1: runtime.VMDataObject{Type: runtime.STRING, StringData: name}})
-			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpJmp, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(len(c.instructions)) + 3}})
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpDefFunc, Oprand1: runtime.VMDataObject{Type: runtime.STRING, Value: name}})
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpJmp, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(len(c.instructions)) + 3}})
 			c.instructions = append(c.instructions, instrs...)
 			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpReturn})
 		}
@@ -127,7 +127,7 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 	case *parser.BlockStatement:
 		if len(node.Statements) == 0 {
 			if isExprContext {
-				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
 			}
 			return
 		}
@@ -193,22 +193,22 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 	case *parser.MemberAccessExpression:
 		c.compileMemberAccessExpression(node)
 	case *parser.IntegerLiteral:
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, Value: node.Value})
 	case *parser.RealLiteral:
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.REAL, FloatData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.REAL, Value: node.Value})
 	case *parser.StringLiteral:
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: node.Value})
 	case *parser.Boolean:
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.BOOLEAN, BoolData: node.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.BOOLEAN, Value: node.Value})
 	case *parser.NilLiteral:
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Nil
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil}) // Nil
 	case *parser.Identifier:
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {
 			token := node.GetToken()
 			panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, node.Value))
 		}
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 		if symbol.Scope == GlobalScope {
 			c.emit(runtime.OpLoadGlobal)
 		} else {
@@ -224,7 +224,7 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 
 func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 	if len(node.Statements) == 0 {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Nil for empty block
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil}) // Nil for empty block
 		return
 	}
 	last := len(node.Statements) - 1
@@ -237,7 +237,7 @@ func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 func (c *Compiler) compileLetStatement(node *parser.LetStatement) {
 	c.compileExpr(node.Value)
 	symbol := c.symbolTable.Define(node.Name.Value)
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 	if symbol.Scope == GlobalScope {
 		c.emit(runtime.OpStoreGlobal)
 	} else {
@@ -247,12 +247,12 @@ func (c *Compiler) compileLetStatement(node *parser.LetStatement) {
 
 func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
 	if node.Value == nil {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL}) // Push nil
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil}) // Push nil
 	} else {
 		c.compileExpr(node.Value)
 	}
 	symbol := c.symbolTable.Define(node.Name.Value)
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 	if symbol.Scope == GlobalScope {
 		c.emit(runtime.OpStoreGlobal)
 	} else {
@@ -303,7 +303,7 @@ func (c *Compiler) compilePrefixExpr(node *parser.PrefixExpression) {
 	case "not":
 		c.emit(runtime.OpNot)
 	case "-":
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, IntData: 0})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, Value: int64(0)})
 		c.emit(runtime.OpSub)
 	default:
 		token := node.GetToken()
@@ -344,7 +344,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 
 	// Consequence
 	if len(node.Consequence.Statements) == 0 {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
 	} else {
 		c.compileStmt(node.Consequence, true)
 	}
@@ -354,7 +354,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 
 	// Alternative
 	if node.Alternative == nil {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
 	} else {
 		c.compileStmt(node.Alternative, true)
 	}
@@ -380,7 +380,7 @@ func (c *Compiler) getJumpOpForInfix(op string) runtime.VMOp {
 }
 
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
-	c.emit(runtime.OpDefFunc, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Name.Value})
+	c.emit(runtime.OpDefFunc, runtime.VMDataObject{Type: runtime.STRING, Value: node.Name.Value})
 	jumpPos := c.emitWithPlaceholder(runtime.OpJmp)
 
 	c.enterScope()
@@ -388,13 +388,13 @@ func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 	for i := len(node.Parameters) - 1; i >= 0; i-- {
 		pname := node.Parameters[i]
 		c.symbolTable.Define(pname.Value)
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: pname.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: pname.Value})
 		c.emit(runtime.OpStoreLocal)
 	}
 
 	c.compileStmt(node.Body, true)
 	if len(node.Body.Statements) == 0 || !isReturnStatement(node.Body.Statements[len(node.Body.Statements)-1]) {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
 		c.emit(runtime.OpReturn)
 	}
 
@@ -413,7 +413,7 @@ func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
 		panic(fmt.Sprintf("line %d:%d: Calling non-identifier function is not supported yet", token.Line, token.Column))
 	}
 
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: ident.Value})
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: ident.Value})
 	c.emit(runtime.OpCall)
 }
 
@@ -425,7 +425,7 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 			token := ident.GetToken()
 			panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
 		}
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 		if symbol.Scope == GlobalScope {
 			c.emit(runtime.OpStoreGlobal)
 		} else {
@@ -443,7 +443,7 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 				token := ident.GetToken()
 				panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
 			}
-			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 			if symbol.Scope == GlobalScope {
 				c.emit(runtime.OpStoreGlobal)
 			} else {
@@ -454,7 +454,7 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 		}
 	} else if memberAccessExpr, ok := node.Left.(*parser.MemberAccessExpression); ok {
 		c.compileExpr(memberAccessExpr.Object)
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: memberAccessExpr.Member.Value})
+		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: memberAccessExpr.Member.Value})
 		c.compileExpr(node.Value)
 		c.emit(runtime.OpSetIndex)
 
@@ -464,7 +464,7 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 				token := ident.GetToken()
 				panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
 			}
-			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: symbol.Name})
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 			if symbol.Scope == GlobalScope {
 				c.emit(runtime.OpStoreGlobal)
 			} else {
@@ -496,7 +496,7 @@ func (c *Compiler) compileLoopStatement(node *parser.LoopStatement) {
 			c.compileStmt(node.Body, false)
 			c.leaveScope()
 
-			c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(loopStart)})
+			c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, Value: int64(loopStart)})
 
 			loopEnd := len(c.instructions)
 			c.patchJump(jmpIfFalsePos)
@@ -514,7 +514,7 @@ func (c *Compiler) compileLoopStatement(node *parser.LoopStatement) {
 	c.compileStmt(node.Body, false)
 	c.leaveScope()
 
-	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(loopStart)})
+	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, Value: int64(loopStart)})
 
 	loopEnd := len(c.instructions)
 	c.patchJump(jmpIfFalsePos)
@@ -559,7 +559,7 @@ func (c *Compiler) compileContinueStatement(node *parser.ContinueStatement) {
 		panic(fmt.Sprintf("line %d:%d: 'continue' outside of a loop", token.Line, token.Column))
 	}
 	currentLoop := c.loopContexts[len(c.loopContexts)-1]
-	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, IntData: int64(currentLoop.startPos)})
+	c.emit(runtime.OpJmp, runtime.VMDataObject{Type: runtime.INTGER, Value: int64(currentLoop.startPos)})
 }
 
 func (c *Compiler) compilePackLiteral(node *parser.PackLiteral) {
@@ -580,7 +580,7 @@ func (c *Compiler) compileIndexExpression(node *parser.IndexExpression) {
 
 func (c *Compiler) compileMemberAccessExpression(node *parser.MemberAccessExpression) {
 	c.compileExpr(node.Object)
-	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, StringData: node.Member.Value})
+	c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: node.Member.Value})
 	c.emit(runtime.OpIndex)
 }
 
@@ -593,14 +593,14 @@ func (c *Compiler) emit(op runtime.VMOp, operands ...runtime.VMDataObject) {
 }
 
 func (c *Compiler) emitWithPlaceholder(op runtime.VMOp) int {
-	instr := runtime.VMInstr{Op: op, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, IntData: -1}}
+	instr := runtime.VMInstr{Op: op, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(-1)}}
 	c.instructions = append(c.instructions, instr)
 	return len(c.instructions) - 1
 }
 
 func (c *Compiler) patchJump(pos int) {
 	jumpTo := len(c.instructions)
-	c.instructions[pos].Oprand1.IntData = int64(jumpTo)
+	c.instructions[pos].Oprand1.Value = int64(jumpTo)
 }
 
 func (c *Compiler) pushLoopContext(start int) {
@@ -618,7 +618,7 @@ func (c *Compiler) patchBreaks(loopEnd int) {
 	}
 	lastCtx := len(c.loopContexts) - 1
 	for _, patchPos := range c.loopContexts[lastCtx].breakPatches {
-		c.instructions[patchPos].Oprand1.IntData = int64(loopEnd)
+		c.instructions[patchPos].Oprand1.Value = int64(loopEnd)
 	}
 }
 

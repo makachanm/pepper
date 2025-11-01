@@ -22,7 +22,7 @@ dim paddle = [
 paddle->x = (SCREEN_W / 2) - (paddle->w / 2)
 
 dim ball = [
-  `r`: 30,
+  `r`: 20,
   `x`: 0,
   `y`: 0,
   `vx`: 5,

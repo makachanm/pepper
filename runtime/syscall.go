@@ -9,7 +9,11 @@ func doSyscall(v VM, code int64) {
 	case code >= 100 && code < 200:
 		doSyscallMath(v, code)
 	case code >= 200 && code < 300:
-		doSyscallString(v, code)
+		if code == 203 || code == 204 { // Route old JSON codes to the new handler
+			doSyscallJson(v, code)
+		} else {
+			doSyscallString(v, code)
+		}
 	case code >= 300 && code < 400:
 		doSyscallGfx(v, code)
 	case code >= 400 && code < 500:
