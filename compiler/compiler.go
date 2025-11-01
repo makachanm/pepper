@@ -176,6 +176,9 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 			c.compileStmt(stmt, false)
 		}
 
+	case *parser.MatchExpression:
+		c.compileMatchExpression(node)
+
 	default:
 		token := stmt.GetToken()
 		panic(fmt.Sprintf("line %d:%d: Unsupported statement type: %T", token.Line, token.Column, stmt))
@@ -386,6 +389,47 @@ func (c *Compiler) getJumpOpForInfix(op string) runtime.VMOp {
 		return runtime.OpJmpIfGt // Jump if greater than
 	}
 	return 0
+}
+
+func (c *Compiler) compileMatchExpression(node *parser.MatchExpression) {
+	endJumps := []int{}
+	var defaultCase *parser.BlockStatement
+
+	// Find default case
+	for _, caseClause := range node.Cases {
+		if caseClause.Pattern == nil {
+			defaultCase = caseClause.Body
+			break
+		}
+	}
+
+	for _, caseClause := range node.Cases {
+		if caseClause.Pattern == nil {
+			continue // Skip default case for now
+		}
+
+		// Condition
+		c.compileExpr(node.Expression)
+		c.compileExpr(caseClause.Pattern)
+		c.emit(runtime.OpCmpEq)
+		jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
+
+		// Body
+		c.compileStmt(caseClause.Body, true)
+		endJumps = append(endJumps, c.emitWithPlaceholder(runtime.OpJmp))
+
+		c.patchJump(jmpIfFalsePos)
+	}
+
+	// Default case
+	if defaultCase != nil {
+		c.compileStmt(defaultCase, true)
+	}
+
+	// Patch all end jumps
+	for _, pos := range endJumps {
+		c.patchJump(pos)
+	}
 }
 
 func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {

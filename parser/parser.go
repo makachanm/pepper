@@ -154,6 +154,8 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseContinueStatement()
 	case lexer.INCLUDE:
 		return p.parseIncludeStatement()
+	case lexer.MATCH:
+		return p.parseMatchStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -599,6 +601,69 @@ func (p *Parser) parseInfixExpression(left Expression) Expression {
 	expression.Right = p.parseExpression(precedence)
 
 	return expression
+}
+
+func (p *Parser) parseMatchStatement() Statement {
+	stmt := &MatchExpression{Token: p.curToken}
+
+	if !p.expectPeek(lexer.LBRACKET) {
+		return nil
+	}
+
+	p.nextToken()
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(lexer.RBRACKET) {
+		return nil
+	}
+
+	if !p.expectPeek(lexer.THEN) {
+		return nil
+	}
+
+	p.nextToken()
+
+	stmt.Cases = []*MatchCase{}
+
+	for !p.curTokenIs(lexer.END) && !p.curTokenIs(lexer.EOF) {
+		if p.curTokenIs(lexer.CASE) || p.curTokenIs(lexer.DEFAULT) {
+			caseStmt := &MatchCase{Token: p.curToken}
+			if p.curTokenIs(lexer.DEFAULT) {
+				caseStmt.Pattern = nil
+			} else {
+				p.nextToken()
+				caseStmt.Pattern = p.parseExpression(LOWEST)
+			}
+
+			if !p.expectPeek(lexer.THEN) {
+				return nil
+			}
+
+			caseStmt.Body = p.parseCaseBlockStatement()
+			stmt.Cases = append(stmt.Cases, caseStmt)
+		} else {
+			p.nextToken()
+		}
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseCaseBlockStatement() *BlockStatement {
+	block := &BlockStatement{Token: p.curToken}
+	block.Statements = []Statement{}
+
+	p.nextToken()
+
+	for !p.curTokenIs(lexer.END) && !p.curTokenIs(lexer.CASE) && !p.curTokenIs(lexer.DEFAULT) && !p.curTokenIs(lexer.EOF) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.nextToken()
+	}
+
+	return block
 }
 
 func (p *Parser) curTokenIs(t lexer.TokenType) bool {

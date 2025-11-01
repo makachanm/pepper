@@ -153,5 +153,19 @@ func doSyscallMath(v VM, code int64) {
 			res = float64(val.Value.(int64)) * (math.Pi / 180)
 		}
 		v.OperandStack.Push(makeRealValueObj(res))
+	case 114: // rand_int
+		max_op := v.OperandStack.Pop()
+		min_op := v.OperandStack.Pop()
+		max := max_op.Value.(int64)
+		min := min_op.Value.(int64)
+		res := min + v.rand.Int63n(max-min+1)
+		v.OperandStack.Push(makeIntValueObj(res))
+	case 115: // rand_real
+		max_op := v.OperandStack.Pop()
+		min_op := v.OperandStack.Pop()
+		max := max_op.Value.(float64)
+		min := min_op.Value.(float64)
+		res := min + v.rand.Float64()*(max-min)
+		v.OperandStack.Push(makeRealValueObj(res))
 	}
 }

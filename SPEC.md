@@ -114,6 +114,18 @@ else then
 end
 ```
 
+match-case 구조의 흐름은 키워드의 다음으로 주어진 표현식의 값을 통해 정해지며, 표현식의 값은 무조건 str, int, real이여야 한다. 표현식은 대괄호`[]`로 감싸야 하며, 대괄호 안에 감싸진 case에 따라 match-case의 흐름이 결정된다.
+```
+match [value] then
+case 1 then
+    (some code...)
+case 2 then
+    (some code...)
+default then
+    (some code...)
+end
+```
+
 ### LOOP CONTROL STATEMENTS
 loop 구조의 흐름은 키워드의 다음으로 주어진 표현식의 값을 통해 정해지며, 표현식의 값은 무조건 bool 값이여야 한다. 표현식은 대괄호`[]`로 감싸야 하며, 대괄호 안에 감싸진 표현식에 따라 loop의 흐름이 결정된다.
 ```

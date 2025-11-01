@@ -64,6 +64,9 @@ const (
 	BREAK    TokenType = "BREAK"
 	CONTINUE TokenType = "CONTINUE"
 	INCLUDE  TokenType = "INCLUDE"
+	MATCH    TokenType = "MATCH"
+	CASE     TokenType = "CASE"
+	DEFAULT  TokenType = "DEFAULT"
 )
 
 type Token struct {
@@ -93,6 +96,9 @@ var keywords = map[string]TokenType{
 	"not":      NOT,
 	"nil":      NIL,
 	"include":  INCLUDE,
+	"match":    MATCH,
+	"case":     CASE,
+	"default":  DEFAULT,
 }
 
 var matchingTokens = map[string]TokenType{

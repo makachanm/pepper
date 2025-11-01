@@ -2,7 +2,9 @@ package runtime
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 // vmHandler defines the function signature for opcode handlers.
@@ -20,6 +22,7 @@ type VM struct {
 
 	// dispatchTable holds the handlers for each opcode.
 	dispatchTable []vmHandler
+	rand          *rand.Rand
 }
 
 func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
@@ -35,6 +38,7 @@ func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 
 		curruntFunctionName: "",
 		callDepth:           0,
+		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 	vm.initDispatchTable()
 	return vm
