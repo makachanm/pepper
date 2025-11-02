@@ -164,14 +164,18 @@ func (p *Parser) parseStatement() Statement {
 func (p *Parser) parseIncludeStatement() *IncludeStatement {
 	stmt := &IncludeStatement{Token: p.curToken}
 
+	if !p.expectPeek(lexer.LBRACKET) {
+		return nil
+	}
+
 	if !p.expectPeek(lexer.STRING) {
 		return nil
 	}
 
 	stmt.Filename = p.curToken.Literal
 
-	if !p.expectPeek(lexer.NEWLINE) {
-		p.nextToken()
+	if !p.expectPeek(lexer.RBRACKET) {
+		return nil
 	}
 
 	return stmt

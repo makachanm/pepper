@@ -509,8 +509,8 @@ func (c *Compiler) compileAssignmentExpression(node *parser.AssignmentExpression
 		if ident, ok := memberAccessExpr.Object.(*parser.Identifier); ok {
 			symbol, ok := c.symbolTable.Resolve(ident.Value)
 			if !ok {
-				token := ident.GetToken()
-				panic(fmt.Sprintf("line %d:%d: undefined variable: %s", token.Line, token.Column, ident.Value))
+				// HACK: Assume global scope if not found
+				symbol = Symbol{Name: ident.Value, Scope: GlobalScope}
 			}
 			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.STRING, Value: symbol.Name})
 			if symbol.Scope == GlobalScope {

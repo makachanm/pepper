@@ -173,5 +173,5 @@ function alias를 가지고 있을 경우, 해당 변수명에 caller를 붙여 
 ### INCLUDE
 Include는 외부 소스 파일을 추가할때 사용된다. 해당 문법을 통하여 상대 경로에 있는 외부 소스 파일을 추가할 수 있다.
 ```
-include `test/test.p`
+include[`test/test.p`]
 ```
