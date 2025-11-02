@@ -16,6 +16,7 @@ const version = "0.2.0"
 
 func main() {
 	var debug bool
+	var verboseDebug bool
 	var showVersion bool
 	var dump string
 	var exec string
@@ -28,11 +29,16 @@ func main() {
 	}
 
 	flag.BoolVar(&debug, "d", false, "enable debug mode")
+	flag.BoolVar(&verboseDebug, "vd", false, "enable verbose debug mode (dumps VM instructions)")
 	flag.BoolVar(&showVersion, "v", false, "show version information")
 	flag.StringVar(&dump, "p", "", "dump bytecode to file")
 	flag.StringVar(&exec, "e", "", "execute bytecode from file")
 	flag.StringVar(&human, "h", "", "view dumped bytecode")
 	flag.Parse()
+
+	if verboseDebug {
+		debug = true
+	}
 
 	if showVersion {
 		fmt.Printf("Pepper v%s\n", version)
@@ -70,12 +76,10 @@ func main() {
 
 		var wg sync.WaitGroup
 		vm := runtime.NewVM(instrs, &wg)
-		vm.Run(debug)
+		vm.Run(debug, verboseDebug)
 		wg.Wait()
 		return
 	}
-
-
 
 	filePath := flag.Arg(0)
 	data, err := os.ReadFile(filePath)
@@ -101,16 +105,9 @@ func main() {
 		return
 	}
 
-	if debug {
-		fmt.Println("Instructions:")
-		for i, instr := range comp {
-			fmt.Printf("%04d %s\n", i, runtime.ResolveVMInstruction(instr))
-		}
-	}
-
 	var wg sync.WaitGroup
 	vm := runtime.NewVM(comp, &wg)
-	vm.Run(debug)
+	vm.Run(debug, verboseDebug)
 
 	if debug {
 		fmt.Println("Stack:")

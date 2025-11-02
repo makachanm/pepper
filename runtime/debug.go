@@ -6,39 +6,46 @@ import (
 )
 
 func DumpOperandStack(v *VM) {
-	fmt.Println(" ----- OPERAND STACK ----- ")
+	fmt.Println("--- Operand Stack ---")
 	stack := v.OperandStack.GetStack()
 	if len(stack) == 0 {
-		fmt.Println("STACK IS EMPTY")
+		fmt.Println("  (empty)")
 		return
 	}
 	for i, obj := range stack {
-		fmt.Printf("%d: %s\n", i, formatVMDataObject(obj))
+		fmt.Printf("  %d: %s\n", i, formatVMDataObject(obj))
 	}
 }
 
 func DumpMemory(v *VM) {
-	fmt.Println(" ----- DATA TABLE ----- ")
-	for i, memdata := range v.Memory.DataTable {
-		name := v.stringTable[i.Name]
-		scope := v.stringTable[i.ScopeKey]
-		fmt.Printf("Name: %s, Scope: %s -> %d\n", name, scope, memdata)
+	globalScopeID := v.internString("")
+
+	fmt.Println("--- Globals ---")
+	for key, index := range v.Memory.DataTable {
+		if key.ScopeKey == globalScopeID {
+			name := v.stringTable[key.Name]
+			value := v.Memory.DataMemory[index]
+			fmt.Printf("  %s = %s\n", name, formatVMDataObject(value))
+		}
 	}
 
-	fmt.Println(" ----- FUNCTION TABLE ----- ")
-	for i, memdata := range v.Memory.FunctionTable {
-		name := v.stringTable[i]
-		fmt.Printf("Name: %s -> %d\n", name, memdata)
+	if v.curruntFunctionID != globalScopeID {
+		currentFunctionName := v.stringTable[v.curruntFunctionID]
+		fmt.Printf("--- Locals in %s ---\n", currentFunctionName)
+		for key, index := range v.Memory.DataTable {
+			if key.ScopeKey == v.curruntFunctionID {
+				name := v.stringTable[key.Name]
+				value := v.Memory.DataMemory[index]
+				fmt.Printf("  %s = %s\n", name, formatVMDataObject(value))
+			}
+		}
 	}
 
-	fmt.Println(" ----- DATA MEMORY ----- ")
-	for i, memdata := range v.Memory.DataMemory {
-		fmt.Println(i, ":", memdata)
-	}
-
-	fmt.Println(" ----- FUNCTION MEMORY ----- ")
-	for i, memdata := range v.Memory.FunctionMemory {
-		fmt.Println(i, ":", memdata)
+	fmt.Println("--- Functions ---")
+	for id, index := range v.Memory.FunctionTable {
+		name := v.stringTable[id]
+		function := v.Memory.FunctionMemory[index]
+		fmt.Printf("  func %s at PC %d\n", name, function.JumpPc)
 	}
 }
 

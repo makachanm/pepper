@@ -1,9 +1,9 @@
-package compiler
+package stdfunc
 
 import "pepper/runtime"
 
-func (c *Compiler) defineStandardFunctions() {
-	c.standardFunctionMaps = map[string][]runtime.VMInstr{
+func DefineStandardFunctions() map[string][]runtime.VMInstr {
+	return map[string][]runtime.VMInstr{
 		"quit": {runtime.VMInstr{Op: runtime.OpHlt, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(0)}}},
 
 		"int":    {runtime.VMInstr{Op: runtime.OpCstInt, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(0)}}},
@@ -18,20 +18,20 @@ func (c *Compiler) defineStandardFunctions() {
 		"write_file": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(4)}}},
 
 		// Math
-		"sin":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(100)}}},
-		"cos":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(101)}}},
-		"tan":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(102)}}},
-		"sqrt":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(103)}}},
-		"pow":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(104)}}},
-		"log":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(105)}}},
-		"exp":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(106)}}},
-		"abs":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(107)}}},
-		"len":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(108)}}},
-		"asin":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(109)}}},
-		"acos":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(110)}}},
-		"atan":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(111)}}},
-		"atan2": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(112)}}},
-		"deg2rad": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(113)}}},
+		"sin":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(100)}}},
+		"cos":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(101)}}},
+		"tan":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(102)}}},
+		"sqrt":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(103)}}},
+		"pow":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(104)}}},
+		"log":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(105)}}},
+		"exp":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(106)}}},
+		"abs":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(107)}}},
+		"len":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(108)}}},
+		"asin":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(109)}}},
+		"acos":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(110)}}},
+		"atan":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(111)}}},
+		"atan2":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(112)}}},
+		"deg2rad":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(113)}}},
 		"rand_int":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(114)}}},
 		"rand_real": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(115)}}},
 
@@ -94,12 +94,12 @@ func (c *Compiler) defineStandardFunctions() {
 		"http_get_json": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(402)}}},
 
 		// Time
-		"sleep": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(600)}}},
-		"now": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(601)}}},
-		"year": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(602)}}},
-		"month": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(603)}}},
-		"day": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(604)}}},
-		"hour": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(605)}}},
+		"sleep":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(600)}}},
+		"now":    {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(601)}}},
+		"year":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(602)}}},
+		"month":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(603)}}},
+		"day":    {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(604)}}},
+		"hour":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(605)}}},
 		"minute": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(606)}}},
 		"second": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(607)}}},
 	}

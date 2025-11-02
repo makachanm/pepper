@@ -100,7 +100,7 @@ func (v *VM) internString(s string) int {
 	return id
 }
 
-func (v *VM) Run(debugmode bool) {
+func (v *VM) Run(debugmode bool, verboseDebug bool) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Panic occurred at PC: %d\n", v.PC)
@@ -114,6 +114,9 @@ func (v *VM) Run(debugmode bool) {
 			return
 		}
 		instr := v.Program[v.PC]
+		if verboseDebug {
+			fmt.Printf("[%04d] %s\n", v.PC, ResolveVMInstruction(instr))
+		}
 		handler := v.dispatchTable[instr.Op]
 		if handler != nil {
 			handler(v)

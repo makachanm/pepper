@@ -6,6 +6,7 @@ import (
 	"pepper/lexer"
 	"pepper/parser"
 	"pepper/runtime"
+	"pepper/stdfunc"
 	"reflect"
 )
 
@@ -107,7 +108,7 @@ func (c *Compiler) leaveScope() {
 
 func (c *Compiler) Compile(program *parser.Program, excludestd bool) []runtime.VMInstr {
 	if !excludestd {
-		c.defineStandardFunctions()
+		c.standardFunctionMaps = stdfunc.DefineStandardFunctions()
 		for name := range c.standardFunctionMaps {
 			c.symbolTable.DefineFunc(name)
 		}
@@ -139,12 +140,6 @@ func (c *Compiler) compileStmt(stmt parser.Statement, isExprContext bool) {
 		c.compileExpr(node.ReturnValue)
 		c.emit(runtime.OpReturn)
 	case *parser.BlockStatement:
-		if len(node.Statements) == 0 {
-			if isExprContext {
-				c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
-			}
-			return
-		}
 		last := len(node.Statements) - 1
 		for i, s := range node.Statements {
 			c.compileStmt(s, isExprContext && (i == last))
@@ -355,9 +350,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 	jmpIfFalsePos := c.emitWithPlaceholder(runtime.OpJmpIfFalse)
 
 	// Consequence
-	if len(node.Consequence.Statements) == 0 {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
-	} else {
+	if len(node.Consequence.Statements) != 0 {
 		c.compileStmt(node.Consequence, true)
 	}
 
@@ -365,9 +358,7 @@ func (c *Compiler) compileIfExpression(node *parser.IfExpression) {
 	c.patchJump(jmpIfFalsePos)
 
 	// Alternative
-	if node.Alternative == nil {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
-	} else {
+	if node.Alternative != nil {
 		c.compileStmt(node.Alternative, true)
 	}
 	c.patchJump(jmpOverElsePos)
@@ -672,5 +663,10 @@ func (c *Compiler) patchBreaks(loopEnd int) {
 
 func isReturnStatement(stmt parser.Statement) bool {
 	_, ok := stmt.(*parser.ReturnStatement)
+	return ok
+}
+
+func (c *Compiler) IsStandatrdFunction(name string) bool {
+	_, ok := c.standardFunctionMaps[name]
 	return ok
 }
