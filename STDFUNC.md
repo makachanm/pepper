@@ -142,6 +142,24 @@ dim my_pack = [ `a`: 1, `b`: 2, `c`: 3 ]
 dim length = len[my_pack] /* 3 */
 ```
 
+#### deg2rad
+`deg2rad` 함수는 각도(degree)를 라디안(radian)으로 변환합니다.
+```
+dim radians = deg2rad[180] /* 3.14159... */
+```
+
+#### rand_int
+`rand_int` 함수는 두 개의 정수 `min`, `max`를 인자로 받아 `min`과 `max` 사이의 임의의 정수를 반환합니다.
+```
+dim random_number = rand_int[1 100]
+```
+
+#### rand_real
+`rand_real` 함수는 두 개의 실수 `min`, `max`를 인자로 받아 `min`과 `max` 사이의 임의의 실수를 반환합니다.
+```
+dim random_number = rand_real[0.0 1.0]
+```
+
 ### 문자열 (String)
 
 #### strlen
@@ -301,6 +319,12 @@ set_color[255 0 0] /* Red */
 `draw_rect` 함수는 x, y, width, height 네 개의 정수 인자를 받아 사각형을 그립니다.
 ```
 draw_rect[10 10 100 50]
+```
+
+#### draw_dot
+`draw_dot` 함수는 x, y 두 개의 정수 인자를 받아 점을 그립니다.
+```
+draw_dot[50 50]
 ```
 
 #### draw_circle
