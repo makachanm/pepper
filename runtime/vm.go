@@ -17,12 +17,14 @@ type VM struct {
 	Program      []VMInstr
 	PC           int
 
-	curruntFunctionName string
-	callDepth           int
+	curruntFunctionID int
 
 	// dispatchTable holds the handlers for each opcode.
 	dispatchTable []vmHandler
 	rand          *rand.Rand
+
+	stringTable []string
+	stringMap   map[string]int
 }
 
 func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
@@ -35,11 +37,11 @@ func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 		Memory:       &mem,
 		Program:      input,
 		PC:           0,
-
-		curruntFunctionName: "",
-		callDepth:           0,
-		rand:                rand.New(rand.NewSource(time.Now().UnixNano())),
+		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
+		stringMap:    make(map[string]int),
+		stringTable:  make([]string, 0),
 	}
+	vm.curruntFunctionID = vm.internString("")
 	vm.initDispatchTable()
 	return vm
 }
@@ -88,6 +90,16 @@ func (v *VM) initDispatchTable() {
 	v.dispatchTable[OpSetIndex] = handleSetIndex
 }
 
+func (v *VM) internString(s string) int {
+	if id, ok := v.stringMap[s]; ok {
+		return id
+	}
+	id := len(v.stringTable)
+	v.stringTable = append(v.stringTable, s)
+	v.stringMap[s] = id
+	return id
+}
+
 func (v *VM) Run(debugmode bool) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -125,68 +137,69 @@ func handlePop(v *VM) {
 }
 
 func handleStoreGlobal(v *VM) {
-	name := v.OperandStack.Pop().Value.(string)
+	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.OperandStack.Pop()
-	if !v.Memory.HasObj(name, "") {
-		v.Memory.MakeObj(name, "")
+	globalScopeID := v.internString("")
+	if !v.Memory.HasObj(nameID, globalScopeID) {
+		v.Memory.MakeObj(nameID, globalScopeID)
 	}
-	v.Memory.SetObj(name, val, "")
+	v.Memory.SetObj(nameID, val, globalScopeID)
 	v.PC++
 }
 
 func handleLoadGlobal(v *VM) {
-	name := v.OperandStack.Pop().Value.(string)
-	val := v.Memory.GetObj(name, "")
+	nameID := v.internString(v.OperandStack.Pop().Value.(string))
+	globalScopeID := v.internString("")
+	val := v.Memory.GetObj(nameID, globalScopeID)
 	v.OperandStack.Push(*val)
 	v.PC++
 }
 
 func handleStoreLocal(v *VM) {
-	name := v.OperandStack.Pop().Value.(string)
+	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.OperandStack.Pop()
-	if !v.Memory.HasObj(name, v.curruntFunctionName) {
-		v.Memory.MakeObj(name, v.curruntFunctionName)
+	if !v.Memory.HasObj(nameID, v.curruntFunctionID) {
+		v.Memory.MakeObj(nameID, v.curruntFunctionID)
 	}
-	v.Memory.SetObj(name, val, v.curruntFunctionName)
+	v.Memory.SetObj(nameID, val, v.curruntFunctionID)
 	v.PC++
 }
 
 func handleLoadLocal(v *VM) {
-	name := v.OperandStack.Pop().Value.(string)
-	val := v.Memory.GetObj(name, v.curruntFunctionName)
+	nameID := v.internString(v.OperandStack.Pop().Value.(string))
+	val := v.Memory.GetObj(nameID, v.curruntFunctionID)
 	v.OperandStack.Push(*val)
 	v.PC++
 }
 
 func handleDefFunc(v *VM) {
 	instr := v.Program[v.PC]
-	funcName := instr.Oprand1.Value.(string)
+	funcNameID := v.internString(instr.Oprand1.Value.(string))
 	funcObj := VMFunctionObject{
 		JumpPc: v.PC + 2,
 	}
-	v.Memory.MakeFunc(funcName)
-	v.Memory.SetFunc(funcName, funcObj)
+	v.Memory.MakeFunc(funcNameID)
+	v.Memory.SetFunc(funcNameID, funcObj)
 	v.PC++
 }
 
 func handleCall(v *VM) {
 	callee := v.OperandStack.Pop()
-	var funcName string
+	var funcNameID int
 
 	switch callee.Type {
 	case STRING: // Direct call by name
-		funcName = callee.Value.(string)
+		funcNameID = v.internString(callee.Value.(string))
 	case FUNCTION_ALIAS:
-		funcName = callee.Value.(string)
+		funcNameID = v.internString(callee.Value.(string))
 	default:
 		panic("Cannot call a non-function")
 	}
 
-	function := v.Memory.GetFunc(funcName)
+	function := v.Memory.GetFunc(funcNameID)
 
-	v.CallStack.Push(CallStackObject{PC: v.PC, Name: v.curruntFunctionName})
-	v.callDepth++
-	v.curruntFunctionName = funcName
+	v.CallStack.Push(CallStackObject{PC: v.PC, NameID: v.curruntFunctionID})
+	v.curruntFunctionID = funcNameID
 	v.PC = function.JumpPc // Jump, no PC increment
 }
 
@@ -200,8 +213,7 @@ func handleReturn(v *VM) {
 	PurgeVMMEM(v.Memory, v)
 
 	v.PC = calldata.PC + 1 // Return to instruction after call
-	v.curruntFunctionName = calldata.Name
-	v.callDepth--
+	v.curruntFunctionID = calldata.NameID
 }
 
 func handleSyscall(v *VM) {

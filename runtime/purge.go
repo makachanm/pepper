@@ -1,8 +1,9 @@
 package runtime
 
 func PurgeVMMEM(mem *VMMEMObjectTable, vm *VM) {
-	returningScope := vm.curruntFunctionName
-	if returningScope == "" {
+	returningScopeID := vm.curruntFunctionID
+	globalScopeID := vm.internString("")
+	if returningScopeID == globalScopeID {
 		// Not in a function, nothing to do.
 		return
 	}
@@ -13,7 +14,7 @@ func PurgeVMMEM(mem *VMMEMObjectTable, vm *VM) {
 	// Find all keys in the returning function's scope.
 	keysToPurge := []VMDataObjKey{}
 	for key := range mem.DataTable {
-		if key.ScopeKey == returningScope {
+		if key.ScopeKey == returningScopeID {
 			keysToPurge = append(keysToPurge, key)
 		}
 	}
@@ -38,5 +39,9 @@ func PurgeVMMEM(mem *VMMEMObjectTable, vm *VM) {
 			// It's safe to deallocate.
 			mem.DeallocateObj(key)
 		}
+	}
+
+	if len(vm.OperandStack.stack) > 2048 {
+		vm.OperandStack.stack = vm.OperandStack.stack[:2048]
 	}
 }

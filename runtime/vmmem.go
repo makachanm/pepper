@@ -1,8 +1,8 @@
 package runtime
 
 type CallStackObject struct {
-	PC   int
-	Name string
+	PC     int
+	NameID int
 }
 
 type CallStack struct {
@@ -67,14 +67,14 @@ func (s *OperandStack) GetStack() []VMDataObject {
 }
 
 type VMDataObjKey struct {
-	Name     string
-	ScopeKey string
+	Name     int
+	ScopeKey int
 }
 
 type VMMEMObjectTable struct {
 	DataTable      map[VMDataObjKey]int
-	FunctionTable  map[string]int
-	ArrayTable     map[string][]VMDataObject
+	FunctionTable  map[int]int
+	ArrayTable     map[int][]VMDataObject
 	DataMemory     []VMDataObject
 	FunctionMemory []VMFunctionObject
 
@@ -85,8 +85,8 @@ type VMMEMObjectTable struct {
 func NewVMMEMObjTable() VMMEMObjectTable {
 	return VMMEMObjectTable{
 		DataTable:      make(map[VMDataObjKey]int),
-		FunctionTable:  make(map[string]int),
-		ArrayTable:     make(map[string][]VMDataObject),
+		FunctionTable:  make(map[int]int),
+		ArrayTable:     make(map[int][]VMDataObject),
 		DataMemory:     make([]VMDataObject, 0),
 		FunctionMemory: make([]VMFunctionObject, 0),
 
@@ -95,8 +95,8 @@ func NewVMMEMObjTable() VMMEMObjectTable {
 	}
 }
 
-func (v *VMMEMObjectTable) MakeObj(name string, scopeKey string) {
-	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+func (v *VMMEMObjectTable) MakeObj(nameID int, scopeKeyID int) {
+	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	var index int
 	if len(v.FreeDataMemorySlots) > 0 {
 		// Reuse a free slot
@@ -127,77 +127,77 @@ func (v *VMMEMObjectTable) DeallocateObj(key VMDataObjKey) {
 	delete(v.DataTable, key)
 }
 
-func (v *VMMEMObjectTable) GetObj(name string, scopeKey string) *VMDataObject {
-	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+func (v *VMMEMObjectTable) GetObj(nameID int, scopeKeyID int) *VMDataObject {
+	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	idx, ok := v.DataTable[key]
 	if !ok {
-		panic("VMDataObject not found: " + name)
+		panic("VMDataObject not found")
 	}
 	return &v.DataMemory[idx]
 }
 
-func (v *VMMEMObjectTable) SetObj(name string, data VMDataObject, scopeKey string) {
-	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+func (v *VMMEMObjectTable) SetObj(nameID int, data VMDataObject, scopeKeyID int) {
+	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	idx, ok := v.DataTable[key]
 	if !ok {
-		panic("VMDataObject not found: " + name)
+		panic("VMDataObject not found")
 	}
 	v.DataMemory[idx] = data
 }
 
-func (v *VMMEMObjectTable) HasObj(name string, scopeKey string) bool {
-	key := VMDataObjKey{Name: name, ScopeKey: scopeKey}
+func (v *VMMEMObjectTable) HasObj(nameID int, scopeKeyID int) bool {
+	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	_, ok := v.DataTable[key]
 	return ok
 }
 
-func (v *VMMEMObjectTable) MakeFunc(name string) {
+func (v *VMMEMObjectTable) MakeFunc(nameID int) {
 	v.FunctionMemory = append(v.FunctionMemory, VMFunctionObject{})
-	v.FunctionTable[name] = v.currunt_free_fm_pointer
+	v.FunctionTable[nameID] = v.currunt_free_fm_pointer
 	v.currunt_free_fm_pointer++
 }
 
-func (v *VMMEMObjectTable) GetFunc(name string) *VMFunctionObject {
-	idx, ok := v.FunctionTable[name]
+func (v *VMMEMObjectTable) GetFunc(nameID int) *VMFunctionObject {
+	idx, ok := v.FunctionTable[nameID]
 	if !ok || idx >= len(v.FunctionMemory) {
-		panic("VMFunctionObject not found: " + name)
+		panic("VMFunctionObject not found")
 	}
 	return &v.FunctionMemory[idx]
 }
 
-func (v *VMMEMObjectTable) SetFunc(name string, fn VMFunctionObject) {
-	idx, ok := v.FunctionTable[name]
+func (v *VMMEMObjectTable) SetFunc(nameID int, fn VMFunctionObject) {
+	idx, ok := v.FunctionTable[nameID]
 	if !ok || idx >= len(v.FunctionMemory) {
-		panic("VMFunctionObject not found: " + name)
+		panic("VMFunctionObject not found")
 	}
 	v.FunctionMemory[idx] = fn
 }
 
-func (v *VMMEMObjectTable) MakeArray(name string) {
-	v.ArrayTable[name] = make([]VMDataObject, 0)
+func (v *VMMEMObjectTable) MakeArray(nameID int) {
+	v.ArrayTable[nameID] = make([]VMDataObject, 0)
 }
 
-func (t *VMMEMObjectTable) GetArray(name string) []VMDataObject {
-	arr, ok := t.ArrayTable[name]
+func (t *VMMEMObjectTable) GetArray(nameID int) []VMDataObject {
+	arr, ok := t.ArrayTable[nameID]
 	if !ok {
-		panic("Array not found: " + name)
+		panic("Array not found")
 	}
 	return arr
 }
 
-func (t *VMMEMObjectTable) PushArrayItem(name string, item VMDataObject) {
-	t.ArrayTable[name] = append(t.ArrayTable[name], item)
+func (t *VMMEMObjectTable) PushArrayItem(nameID int, item VMDataObject) {
+	t.ArrayTable[nameID] = append(t.ArrayTable[nameID], item)
 }
 
-func (t *VMMEMObjectTable) SetArrayItem(name string, idx int, item VMDataObject) {
-	if idx >= len(t.ArrayTable[name]) {
-		panic("Array index out of bounds: " + name)
+func (t *VMMEMObjectTable) SetArrayItem(nameID int, idx int, item VMDataObject) {
+	if idx >= len(t.ArrayTable[nameID]) {
+		panic("Array index out of bounds")
 	}
-	t.ArrayTable[name][idx] = item
+	t.ArrayTable[nameID][idx] = item
 
 }
 
-func (t *VMMEMObjectTable) HasArray(name string) bool {
-	_, ok := t.ArrayTable[name]
+func (t *VMMEMObjectTable) HasArray(nameID int) bool {
+	_, ok := t.ArrayTable[nameID]
 	return ok
 }

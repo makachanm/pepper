@@ -20,12 +20,15 @@ func DumpOperandStack(v *VM) {
 func DumpMemory(v *VM) {
 	fmt.Println(" ----- DATA TABLE ----- ")
 	for i, memdata := range v.Memory.DataTable {
-		fmt.Println(i, ":", memdata)
+		name := v.stringTable[i.Name]
+		scope := v.stringTable[i.ScopeKey]
+		fmt.Printf("Name: %s, Scope: %s -> %d\n", name, scope, memdata)
 	}
 
 	fmt.Println(" ----- FUNCTION TABLE ----- ")
 	for i, memdata := range v.Memory.FunctionTable {
-		fmt.Println(i, ":", memdata)
+		name := v.stringTable[i]
+		fmt.Printf("Name: %s -> %d\n", name, memdata)
 	}
 
 	fmt.Println(" ----- DATA MEMORY ----- ")
