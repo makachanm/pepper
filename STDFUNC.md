@@ -315,6 +315,12 @@ clear[]
 set_color[255 0 0] /* Red */
 ```
 
+#### set_rgba
+`set_rgba` 함수는 R, G, B, A 네 개의 정수 인자를 받아 드로잉 색상과 투명도를 설정합니다. 각 값은 0과 255 사이여야 합니다.
+```
+set_rgba[255 0 0 128] /* 50% 투명도의 빨간색 */
+```
+
 #### draw_rect
 `draw_rect` 함수는 x, y, width, height 네 개의 정수 인자를 받아 사각형을 그립니다.
 ```
@@ -495,6 +501,20 @@ set_sprite_rotation[sprite_id 0.5]
 `set_sprite_scale` 함수는 스프라이트 ID와 x, y 스케일 값을 인자로 받아 스프라이트의 크기를 조절합니다.
 ```
 set_sprite_scale[sprite_id 2.0 2.0]
+```
+
+### 그래픽스: 마스킹 (Graphics: Masking)
+
+#### set_mask
+`set_mask` 함수는 마스크로 사용할 스프라이트 ID와 마스크를 적용할 x, y 좌표를 인자로 받습니다. 이 함수 호출 이후부터 `reset_mask`가 호출되기 전까지 그려지는 모든 내용은 해당 스프라이트의 알파 채널에 의해 마스킹됩니다.
+```
+set_mask[mask_sprite_id 0 0]
+```
+
+#### reset_mask
+`reset_mask` 함수는 이전에 `set_mask`로 설정된 마스크를 해제합니다.
+```
+reset_mask[]
 ```
 
 ### HTTP

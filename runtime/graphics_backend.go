@@ -15,6 +15,10 @@ type PepperGraphics struct {
 	wg           *sync.WaitGroup
 	sprites      map[int]*Sprite
 	nextSpriteID int
+	isMasking    bool
+	maskSpriteID int
+	maskX        int
+	maskY        int
 }
 
 func NewGraphics(width, height int, wg *sync.WaitGroup) *PepperGraphics {
@@ -43,6 +47,10 @@ func NewGraphics(width, height int, wg *sync.WaitGroup) *PepperGraphics {
 		wg:           wg,
 		sprites:      make(map[int]*Sprite),
 		nextSpriteID: 0,
+		isMasking:    false,
+		maskSpriteID: -1,
+		maskX:        0,
+		maskY:        0,
 	}
 
 	// Start the event loop in a separate goroutine
@@ -127,6 +135,10 @@ func (pg *PepperGraphics) Clear() {
 
 func (pg *PepperGraphics) SetSourceRGB(r, g, b float64) {
 	pg.Surface.SetSourceRGB(r, g, b)
+}
+
+func (pg *PepperGraphics) SetSourceRGBA(r, g, b, a float64) {
+	pg.Surface.SetSourceRGBA(r, g, b, a)
 }
 
 func (pg *PepperGraphics) DrawRect(x, y, width, height int) {
@@ -298,4 +310,38 @@ func (pg *PepperGraphics) SetSpriteScale(id int, sx, sy float64) {
 	}
 	sprite.ScaleX = sx
 	sprite.ScaleY = sy
+}
+
+func (pg *PepperGraphics) SetMask(id, x, y int) {
+	if _, ok := pg.sprites[id]; !ok {
+		return // Or handle error: mask sprite not found
+	}
+	pg.Surface.PushGroup()
+	pg.isMasking = true
+	pg.maskSpriteID = id
+	pg.maskX = x
+	pg.maskY = y
+}
+
+func (pg *PepperGraphics) ResetMask() {
+	if !pg.isMasking {
+		return
+	}
+
+	contentPattern := pg.Surface.PopGroup()
+	defer contentPattern.Destroy()
+
+	maskSprite := pg.sprites[pg.maskSpriteID]
+
+	pg.Surface.PushGroup()
+	pg.Surface.SetSourceSurface(maskSprite.Surface, float64(pg.maskX), float64(pg.maskY))
+	pg.Surface.Paint()
+	maskPattern := pg.Surface.PopGroup()
+	defer maskPattern.Destroy()
+
+	pg.Surface.SetSource(contentPattern)
+	pg.Surface.Mask(*maskPattern)
+
+	pg.isMasking = false
+	pg.maskSpriteID = -1
 }

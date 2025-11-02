@@ -78,6 +78,41 @@ func GfxSetSourceRGB(stack *OperandStack) {
 	Gfx.SetSourceRGB(r, g, b)
 }
 
+func GfxSetSourceRGBA(stack *OperandStack) {
+	aObj := stack.Pop()
+	bObj := stack.Pop()
+	gObj := stack.Pop()
+	rObj := stack.Pop()
+
+	var r, g, b, a float64
+
+	if rObj.Type == REAL {
+		r = rObj.Value.(float64)
+	} else {
+		r = float64(rObj.Value.(int64)) / 255.0
+	}
+
+	if gObj.Type == REAL {
+		g = gObj.Value.(float64)
+	} else {
+		g = float64(gObj.Value.(int64)) / 255.0
+	}
+
+	if bObj.Type == REAL {
+		b = bObj.Value.(float64)
+	} else {
+		b = float64(bObj.Value.(int64)) / 255.0
+	}
+
+	if aObj.Type == REAL {
+		a = aObj.Value.(float64)
+	} else {
+		a = float64(aObj.Value.(int64)) / 255.0
+	}
+
+	Gfx.SetSourceRGBA(r, g, b, a)
+}
+
 func GfxDrawRect(stack *OperandStack) {
 	heightObj := stack.Pop()
 	widthObj := stack.Pop()
@@ -605,4 +640,36 @@ func GfxSetSpriteScale(stack *OperandStack) {
 	}
 
 	Gfx.SetSpriteScale(id, sx, sy)
+}
+
+func GfxSetMask(stack *OperandStack) {
+	yObj := stack.Pop()
+	xObj := stack.Pop()
+	idObj := stack.Pop()
+
+	var x, y, id int
+
+	if idObj.Type == REAL {
+		id = int(idObj.Value.(float64))
+	} else {
+		id = int(idObj.Value.(int64))
+	}
+
+	if xObj.Type == REAL {
+		x = int(xObj.Value.(float64))
+	} else {
+		x = int(xObj.Value.(int64))
+	}
+
+	if yObj.Type == REAL {
+		y = int(yObj.Value.(float64))
+	} else {
+		y = int(yObj.Value.(int64))
+	}
+
+	Gfx.SetMask(id, x, y)
+}
+
+func GfxResetMask(stack *OperandStack) {
+	Gfx.ResetMask()
 }

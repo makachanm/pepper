@@ -26,6 +26,8 @@ func doSyscallGfx(vmInstance VM, code int64) {
 		GfxSetFontFace(vmInstance.OperandStack)
 	case 311: // gfx_set_font_size
 		GfxSetFontSize(vmInstance.OperandStack)
+	case 312: // gfx_set_source_rgba
+		GfxSetSourceRGBA(vmInstance.OperandStack)
 
 	case 313: // gfx_wait_event
 		GfxWaitEvent(vmInstance.OperandStack)
@@ -70,6 +72,10 @@ func doSyscallGfx(vmInstance VM, code int64) {
 
 	case 332:
 		GfxDrawDot(vmInstance.OperandStack)
+	case 333: // gfx_set_mask
+		GfxSetMask(vmInstance.OperandStack)
+	case 334: // gfx_reset_mask
+		GfxResetMask(vmInstance.OperandStack)
 	}
 }
 

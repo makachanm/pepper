@@ -6,6 +6,7 @@ type Graphics interface {
 	SetWindowTitle(title string)
 	Clear()
 	SetSourceRGB(r, g, b float64)
+	SetSourceRGBA(r, g, b, a float64)
 	DrawRect(x, y, width, height int)
 	DrawDot(x, y int)
 	DrawCircle(x, y, radius int)
@@ -33,4 +34,6 @@ type Graphics interface {
 	DrawSprite(spriteID int, x, y int)
 	SetSpriteRotation(spriteID int, angle float64)
 	SetSpriteScale(spriteID int, scaleX, scaleY float64)
+	SetMask(spriteID, x, y int)
+	ResetMask()
 }
