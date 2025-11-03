@@ -213,7 +213,11 @@ func handleReturn(v *VM) {
 	}
 	calldata := v.CallStack.Pop()
 
-	PurgeVMMEM(v.Memory, v)
+	// Do not purge memory on recursive calls for now.
+	// This is a temporary fix to prevent crashes in functions like fibonacci.
+	if v.curruntFunctionID != calldata.NameID {
+		PurgeVMMEM(v.Memory, v)
+	}
 
 	v.PC = calldata.PC + 1 // Return to instruction after call
 	v.curruntFunctionID = calldata.NameID

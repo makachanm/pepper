@@ -40,8 +40,9 @@ func PurgeVMMEM(mem *VMMEMObjectTable, vm *VM) {
 			mem.DeallocateObj(key)
 		}
 	}
-
-	if len(vm.OperandStack.stack) > 2048 {
-		vm.OperandStack.stack = vm.OperandStack.stack[:2048]
-	}
+	/*
+		if len(vm.OperandStack.stack) > 2048 {
+			vm.OperandStack.stack = vm.OperandStack.stack[:2048]
+		}
+	*/
 }
