@@ -57,4 +57,4 @@ dim elapsed = (end - start)
 
 print[`Benchmark Ended. Elapsed time=`]
 println[elapsed]
-quit[]
+

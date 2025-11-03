@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"pepper/compiler"
 	"pepper/lexer"
@@ -10,6 +11,9 @@ import (
 	"pepper/runtime"
 	"pepper/utils"
 	"sync"
+
+	"net/http"
+	_ "net/http/pprof"
 )
 
 const version = "1.0.0"
@@ -35,6 +39,12 @@ func main() {
 	flag.StringVar(&exec, "e", "", "execute bytecode from file")
 	flag.StringVar(&human, "h", "", "view dumped bytecode")
 	flag.Parse()
+
+	if debug {
+		go func() {
+			log.Fatal(http.ListenAndServe(":8080", nil))
+		}()
+	}
 
 	if verboseDebug {
 		debug = true
