@@ -4,7 +4,7 @@ import (
 	"math"
 )
 
-func doSyscallMath(v VM, code int64) {
+func doSyscallMath(v *VM, code int64) {
 	switch code {
 	case 100: // sin
 		val := v.OperandStack.Pop()

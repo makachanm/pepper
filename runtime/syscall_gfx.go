@@ -1,6 +1,6 @@
 package runtime
 
-func doSyscallGfx(vmInstance VM, code int64) {
+func doSyscallGfx(vmInstance *VM, code int64) {
 	switch code {
 	case 300: // gfx_clear
 		GfxClear(vmInstance.OperandStack)

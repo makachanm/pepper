@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func doSyscallIO(vmInstance VM, code int64) {
+func doSyscallIO(vmInstance *VM, code int64) {
 	switch code {
 	case 0: // print
 		val := vmInstance.OperandStack.Pop()

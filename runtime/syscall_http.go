@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func doSyscallHttp(vmInstance VM, code int64) {
+func doSyscallHttp(vmInstance *VM, code int64) {
 	switch code {
 	case 400: // http_get
 		url := vmInstance.OperandStack.Pop()

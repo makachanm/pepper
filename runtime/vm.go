@@ -8,7 +8,7 @@ import (
 )
 
 // vmHandler defines the function signature for opcode handlers.
-type vmHandler func(v *VM)
+type vmHandler func(v *VM) bool
 
 type VM struct {
 	CallStack    *CallStack
@@ -88,6 +88,15 @@ func (v *VM) initDispatchTable() {
 	v.dispatchTable[OpIndex] = handleIndex
 	v.dispatchTable[OpMakePack] = handleMakePack
 	v.dispatchTable[OpSetIndex] = handleSetIndex
+
+	for i, h := range v.dispatchTable {
+		if h == nil {
+			opcode := i
+			v.dispatchTable[opcode] = func(v *VM) bool {
+				panic(fmt.Sprintf("Unsupported opcode: %d at PC: %d", opcode, v.PC))
+			}
+		}
+	}
 }
 
 func (v *VM) internString(s string) int {
@@ -118,28 +127,26 @@ func (v *VM) Run(debugmode bool, verboseDebug bool) {
 			fmt.Printf("[%04d] %s\n", v.PC, ResolveVMInstruction(instr))
 		}
 		handler := v.dispatchTable[instr.Op]
-		if handler != nil {
-			handler(v)
-		} else {
-			panic(fmt.Sprintf("Unsupported opcode: %d at PC: %d", instr.Op, v.PC))
+		if handler(v) {
+			v.PC++
 		}
 	}
 }
 
 // --- Opcode Handlers ---
 
-func handlePush(v *VM) {
+func handlePush(v *VM) bool {
 	instr := v.Program[v.PC]
 	v.OperandStack.Push(instr.Oprand1)
-	v.PC++
+	return true
 }
 
-func handlePop(v *VM) {
+func handlePop(v *VM) bool {
 	v.OperandStack.Pop()
-	v.PC++
+	return true
 }
 
-func handleStoreGlobal(v *VM) {
+func handleStoreGlobal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.OperandStack.Pop()
 	globalScopeID := v.internString("")
@@ -147,35 +154,35 @@ func handleStoreGlobal(v *VM) {
 		v.Memory.MakeObj(nameID, globalScopeID)
 	}
 	v.Memory.SetObj(nameID, val, globalScopeID)
-	v.PC++
+	return true
 }
 
-func handleLoadGlobal(v *VM) {
+func handleLoadGlobal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	globalScopeID := v.internString("")
 	val := v.Memory.GetObj(nameID, globalScopeID)
 	v.OperandStack.Push(*val)
-	v.PC++
+	return true
 }
 
-func handleStoreLocal(v *VM) {
+func handleStoreLocal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.OperandStack.Pop()
 	if !v.Memory.HasObj(nameID, v.curruntFunctionID) {
 		v.Memory.MakeObj(nameID, v.curruntFunctionID)
 	}
 	v.Memory.SetObj(nameID, val, v.curruntFunctionID)
-	v.PC++
+	return true
 }
 
-func handleLoadLocal(v *VM) {
+func handleLoadLocal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.Memory.GetObj(nameID, v.curruntFunctionID)
 	v.OperandStack.Push(*val)
-	v.PC++
+	return true
 }
 
-func handleDefFunc(v *VM) {
+func handleDefFunc(v *VM) bool {
 	instr := v.Program[v.PC]
 	funcNameID := v.internString(instr.Oprand1.Value.(string))
 	funcObj := VMFunctionObject{
@@ -183,10 +190,10 @@ func handleDefFunc(v *VM) {
 	}
 	v.Memory.MakeFunc(funcNameID)
 	v.Memory.SetFunc(funcNameID, funcObj)
-	v.PC++
+	return true
 }
 
-func handleCall(v *VM) {
+func handleCall(v *VM) bool {
 	callee := v.OperandStack.Pop()
 	var funcNameID int
 
@@ -204,12 +211,13 @@ func handleCall(v *VM) {
 	v.CallStack.Push(CallStackObject{PC: v.PC, NameID: v.curruntFunctionID})
 	v.curruntFunctionID = funcNameID
 	v.PC = function.JumpPc // Jump, no PC increment
+	return false
 }
 
-func handleReturn(v *VM) {
+func handleReturn(v *VM) bool {
 	if v.CallStack.IsEmpty() {
 		v.PC = len(v.Program) // Halt execution
-		return
+		return false
 	}
 	calldata := v.CallStack.Pop()
 
@@ -221,228 +229,230 @@ func handleReturn(v *VM) {
 
 	v.PC = calldata.PC + 1 // Return to instruction after call
 	v.curruntFunctionID = calldata.NameID
+	return false
 }
 
-func handleSyscall(v *VM) {
+func handleSyscall(v *VM) bool {
 	instr := v.Program[v.PC]
-	doSyscall(*v, instr.Oprand1.Value.(int64))
-	v.PC++
+	doSyscall(v, instr.Oprand1.Value.(int64))
+	return true
 }
 
-func handleAdd(v *VM) {
+func handleAdd(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a + b }, func(a, b int64) int64 { return a + b }, func(a, b string) string { return a + b }))
-	v.PC++
+	return true
 }
 
-func handleSub(v *VM) {
+func handleSub(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a - b }, func(a, b int64) int64 { return a - b }, nil))
-	v.PC++
+	return true
 }
 
-func handleMul(v *VM) {
+func handleMul(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a * b }, func(a, b int64) int64 { return a * b }, nil))
-	v.PC++
+	return true
 }
 
-func handleDiv(v *VM) {
+func handleDiv(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Operate(right, func(a, b float64) float64 { return a / b }, func(a, b int64) int64 { return a / b }, nil))
-	v.PC++
+	return true
 }
 
-func handleMod(v *VM) {
+func handleMod(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Operate(right, nil, func(a, b int64) int64 { return a % b }, nil))
-	v.PC++
+	return true
 }
 
-func handleAnd(v *VM) {
+func handleAnd(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Type == BOOLEAN && right.Type == BOOLEAN {
 		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.Value.(bool) && right.Value.(bool)})
 	}
-	v.PC++
+	return true
 }
 
-func handleOr(v *VM) {
+func handleOr(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Type == BOOLEAN && right.Type == BOOLEAN {
 		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.Value.(bool) || right.Value.(bool)})
 	}
-	v.PC++
+	return true
 }
 
-func handleNot(v *VM) {
+func handleNot(v *VM) bool {
 	val := v.OperandStack.Pop()
 	if val.Type == BOOLEAN {
 		v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: !val.Value.(bool)})
 	}
-	v.PC++
+	return true
 }
 
-func handleCmpEq(v *VM) {
+func handleCmpEq(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.IsEqualTo(right)})
-	v.PC++
+	return true
 }
 
-func handleCmpNeq(v *VM) {
+func handleCmpNeq(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(VMDataObject{Type: BOOLEAN, Value: left.IsNotEqualTo(right)})
-	v.PC++
+	return true
 }
 
-func handleCmpGt(v *VM) {
+func handleCmpGt(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }))
-	v.PC++
+	return true
 }
 
-func handleCmpLt(v *VM) {
+func handleCmpLt(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }))
-	v.PC++
+	return true
 }
 
-func handleCmpGte(v *VM) {
+func handleCmpGte(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }))
-	v.PC++
+	return true
 }
 
-func handleCmpLte(v *VM) {
+func handleCmpLte(v *VM) bool {
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	v.OperandStack.Push(left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }))
-	v.PC++
+	return true
 }
 
-func handleJmp(v *VM) {
+func handleJmp(v *VM) bool {
 	instr := v.Program[v.PC]
 	v.PC = int(instr.Oprand1.Value.(int64))
+	return false
 }
 
-func handleJmpIfFalse(v *VM) {
+func handleJmpIfFalse(v *VM) bool {
 	instr := v.Program[v.PC]
 	condition := v.OperandStack.Pop()
 	if condition.Type == BOOLEAN && !condition.Value.(bool) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleJmpIfEq(v *VM) {
+func handleJmpIfEq(v *VM) bool {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.IsEqualTo(right) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleJmpIfNeq(v *VM) {
+func handleJmpIfNeq(v *VM) bool {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.IsNotEqualTo(right) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleJmpIfGt(v *VM) {
+func handleJmpIfGt(v *VM) bool {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Compare(right, func(a, b float64) bool { return a > b }, func(a, b int64) bool { return a > b }).Value.(bool) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleJmpIfLt(v *VM) {
+func handleJmpIfLt(v *VM) bool {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Compare(right, func(a, b float64) bool { return a < b }, func(a, b int64) bool { return a < b }).Value.(bool) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleJmpIfGte(v *VM) {
+func handleJmpIfGte(v *VM) bool {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Compare(right, func(a, b float64) bool { return a >= b }, func(a, b int64) bool { return a >= b }).Value.(bool) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleJmpIfLte(v *VM) {
+func handleJmpIfLte(v *VM) bool {
 	instr := v.Program[v.PC]
 	right := v.OperandStack.Pop()
 	left := v.OperandStack.Pop()
 	if left.Compare(right, func(a, b float64) bool { return a <= b }, func(a, b int64) bool { return a <= b }).Value.(bool) {
 		v.PC = int(instr.Oprand1.Value.(int64))
-	} else {
-		v.PC++
+		return false
 	}
+	return true
 }
 
-func handleCstInt(v *VM) {
+func handleCstInt(v *VM) bool {
 	val := v.OperandStack.Pop()
 	v.OperandStack.Push(val.CastTo(INTGER))
-	v.PC++
+	return true
 }
 
-func handleCstReal(v *VM) {
+func handleCstReal(v *VM) bool {
 	val := v.OperandStack.Pop()
 	v.OperandStack.Push(val.CastTo(REAL))
-	v.PC++
+	return true
 }
 
-func handleCstStr(v *VM) {
+func handleCstStr(v *VM) bool {
 	val := v.OperandStack.Pop()
 	v.OperandStack.Push(val.CastTo(STRING))
-	v.PC++
+	return true
 }
 
-func handleHlt(v *VM) {
+func handleHlt(v *VM) bool {
 	ShouldQuit = true
 	v.PC = len(v.Program) // Stop the loop
+	return false
 }
 
-func handleIndex(v *VM) {
+func handleIndex(v *VM) bool {
 	index := v.OperandStack.Pop()
 	packObj := v.OperandStack.Pop()
 	if packObj.Type != PACK || packObj.Value == nil {
 		v.OperandStack.Push(makeNilValueObj())
-		v.PC++
-		return
+		return true
 	}
 	packData := packObj.Value.(map[PackKey]VMDataObject)
 	key := PackKey{
@@ -454,22 +464,21 @@ func handleIndex(v *VM) {
 	} else {
 		v.OperandStack.Push(makeNilValueObj())
 	}
-	v.PC++
+	return true
 }
 
-func handleMakePack(v *VM) {
+func handleMakePack(v *VM) bool {
 	pack := make(map[PackKey]VMDataObject)
 	v.OperandStack.Push(VMDataObject{Type: PACK, Value: pack})
-	v.PC++
+	return true
 }
 
-func handleSetIndex(v *VM) {
+func handleSetIndex(v *VM) bool {
 	value := v.OperandStack.Pop()
 	index := v.OperandStack.Pop()
 	packObj := v.OperandStack.Pop()
 	if packObj.Type != PACK || packObj.Value == nil {
-		v.PC++
-		return
+		return true
 	}
 	packData := packObj.Value.(map[PackKey]VMDataObject)
 	key := PackKey{
@@ -478,5 +487,5 @@ func handleSetIndex(v *VM) {
 	}
 	packData[key] = value
 	v.OperandStack.Push(packObj)
-	v.PC++
+	return true
 }

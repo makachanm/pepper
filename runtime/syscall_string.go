@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func doSyscallString(vmInstance VM, code int64) {
+func doSyscallString(vmInstance *VM, code int64) {
 	switch code {
 	case 200: // str_len
 		str := vmInstance.OperandStack.Pop()

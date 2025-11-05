@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-func doSyscallJson(v VM, code int64) {
+func doSyscallJson(v *VM, code int64) {
 	switch code {
 	case 500, 204: // json_encode
 		val := v.OperandStack.Pop()

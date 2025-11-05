@@ -268,6 +268,59 @@ func (c *Compiler) compileDimStatement(node *parser.DimStatement) {
 }
 
 func (c *Compiler) compileInfixExpr(node *parser.InfixExpression) {
+	// --- Constant Folding for Integers and Reals ---
+	var leftVal, rightVal float64
+	var leftIsNumber, rightIsNumber bool
+	var leftIsInt, rightIsInt bool
+
+	if l, ok := node.Left.(*parser.IntegerLiteral); ok {
+		leftVal = float64(l.Value)
+		leftIsNumber = true
+		leftIsInt = true
+	} else if l, ok := node.Left.(*parser.RealLiteral); ok {
+		leftVal = l.Value
+		leftIsNumber = true
+	}
+
+	if r, ok := node.Right.(*parser.IntegerLiteral); ok {
+		rightVal = float64(r.Value)
+		rightIsNumber = true
+		rightIsInt = true
+	} else if r, ok := node.Right.(*parser.RealLiteral); ok {
+		rightVal = r.Value
+		rightIsNumber = true
+	}
+
+	if leftIsNumber && rightIsNumber {
+		var result float64
+		isResultInt := leftIsInt && rightIsInt
+
+		switch node.Operator {
+		case "+":
+			result = leftVal + rightVal
+		case "-":
+			result = leftVal - rightVal
+		case "*":
+			result = leftVal * rightVal
+		case "/":
+			if rightVal == 0.0 {
+				goto fallback // Division by zero, cannot fold.
+			}
+			result = leftVal / rightVal
+			isResultInt = false // Division of literals is treated as real division.
+		default:
+			goto fallback // Operator not supported for folding.
+		}
+
+		if isResultInt {
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.INTGER, Value: int64(result)})
+		} else {
+			c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.REAL, Value: result})
+		}
+		return
+	}
+
+fallback:
 	c.compileExpr(node.Left)
 	c.compileExpr(node.Right)
 
