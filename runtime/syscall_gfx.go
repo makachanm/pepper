@@ -78,35 +78,3 @@ func doSyscallGfx(vmInstance *VM, code int64) {
 		GfxResetMask(vmInstance.OperandStack)
 	}
 }
-
-func eventToPack(event Event) VMDataObject {
-	pack := make(map[PackKey]VMDataObject)
-	pack[PackKey{Type: STRING, Value: "type"}] = VMDataObject{Type: STRING, Value: string(event.Type)}
-
-	switch event.Type {
-	case EventTypeMouseMotion, EventTypeMouseButtonDown, EventTypeMouseButtonUp:
-		pack[PackKey{Type: STRING, Value: "x"}] = VMDataObject{Type: INTGER, Value: int64(event.X)}
-		pack[PackKey{Type: STRING, Value: "y"}] = VMDataObject{Type: INTGER, Value: int64(event.Y)}
-	}
-
-	if event.Type == EventTypeMouseButtonDown || event.Type == EventTypeMouseButtonUp {
-		pack[PackKey{Type: STRING, Value: "button"}] = VMDataObject{Type: INTGER, Value: int64(event.Button)}
-	}
-
-	if event.Type == EventTypeKeyDown || event.Type == EventTypeKeyUp {
-		pack[PackKey{Type: STRING, Value: "key_name"}] = VMDataObject{Type: STRING, Value: event.KeyName}
-	}
-
-	return VMDataObject{Type: PACK, Value: pack}
-}
-
-func GfxWaitEvent(stack *OperandStack) {
-	if event, ok := EventQueue.DequeueNonBlocking(); ok {
-		stack.Push(eventToPack(event))
-	} else {
-		if len(stack.stack) > 0 {
-			stack.Pop()
-		}
-		stack.Push(makeNilValueObj())
-	}
-}

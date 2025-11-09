@@ -1,4 +1,4 @@
-package runtime
+package gfx
 
 type Graphics interface {
 	Resize(width, height int)

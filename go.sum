@@ -1,5 +1,11 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/rustyoz/Mtransform v0.0.0-20250628105438-00796a985d0a h1:iqc6IJquka4XBgVSqP+KaNe4nPk7n+pfTbpTx51IgJo=
+github.com/rustyoz/Mtransform v0.0.0-20250628105438-00796a985d0a/go.mod h1:/OCzi5mN2hO/GaVureeTqn0EJbOnZUdBF8zHxWvFlt8=
+github.com/rustyoz/genericlexer v0.0.0-20250522144106-d3cfee480384 h1:jrCaAewj72Bp+RHPzRB+CFOLRwCiluzaiwY0R1h0SNw=
+github.com/rustyoz/genericlexer v0.0.0-20250522144106-d3cfee480384/go.mod h1:m65JtsVg785EjQvQylesseVucezoQZqJozlPAfjXmbE=
+github.com/rustyoz/svg v0.0.0-20250705135709-8b1786137cb3 h1:dFappt+gj/o9cCFfMmXV8Jq+hShQmFlM6Uh2Vd0YlzE=
+github.com/rustyoz/svg v0.0.0-20250705135709-8b1786137cb3/go.mod h1:33v4CGNONT4+QIwIt3o1GVdBqTfLCeptHNc0HpZ1N14=
 github.com/ungerik/go-cairo v0.0.0-20240304075741-47de8851d267 h1:KA55kgg61iraQP4wSKIFRHwHIgDqim2Tvh8EXn7Udxw=
 github.com/ungerik/go-cairo v0.0.0-20240304075741-47de8851d267/go.mod h1:yLTJg56omDJ+JVxZ5whpCrZgQdaSs+OBdFa+X6ViJcI=
 github.com/veandco/go-sdl2 v0.4.40 h1:fZv6wC3zz1Xt167P09gazawnpa0KY5LM7JAvKpX9d/U=

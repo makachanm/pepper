@@ -1,13 +1,14 @@
 package runtime
 
 import (
+	"pepper/runtime/gfx"
 	"sync"
 )
 
-var Gfx Graphics
+var Gfx gfx.Graphics
 
 func GfxNew(width, height int, wg *sync.WaitGroup) {
-	Gfx = NewGraphics(width, height, wg)
+	Gfx = gfx.NewPepperGraphics(width, height, wg)
 }
 
 func GfxResize(stack *OperandStack) {
@@ -29,6 +30,38 @@ func GfxResize(stack *OperandStack) {
 	}
 
 	Gfx.Resize(width, height)
+}
+
+func eventToPack(event gfx.Event) VMDataObject {
+	pack := make(map[PackKey]VMDataObject)
+	pack[PackKey{Type: STRING, Value: "type"}] = VMDataObject{Type: STRING, Value: string(event.Type)}
+
+	switch event.Type {
+	case gfx.EventTypeMouseMotion, gfx.EventTypeMouseButtonDown, gfx.EventTypeMouseButtonUp:
+		pack[PackKey{Type: STRING, Value: "x"}] = VMDataObject{Type: INTGER, Value: int64(event.X)}
+		pack[PackKey{Type: STRING, Value: "y"}] = VMDataObject{Type: INTGER, Value: int64(event.Y)}
+	}
+
+	if event.Type == gfx.EventTypeMouseButtonDown || event.Type == gfx.EventTypeMouseButtonUp {
+		pack[PackKey{Type: STRING, Value: "button"}] = VMDataObject{Type: INTGER, Value: int64(event.Button)}
+	}
+
+	if event.Type == gfx.EventTypeKeyDown || event.Type == gfx.EventTypeKeyUp {
+		pack[PackKey{Type: STRING, Value: "key_name"}] = VMDataObject{Type: STRING, Value: event.KeyName}
+	}
+
+	return VMDataObject{Type: PACK, Value: pack}
+}
+
+func GfxWaitEvent(stack *OperandStack) {
+	if event, ok := gfx.EventQueue.DequeueNonBlocking(); ok {
+		stack.Push(eventToPack(event))
+	} else {
+		if len(stack.stack) > 0 {
+			stack.Pop()
+		}
+		stack.Push(makeNilValueObj())
+	}
 }
 
 func GfxGetWidth(stack *OperandStack) {

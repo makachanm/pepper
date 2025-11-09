@@ -1,4 +1,4 @@
-package runtime
+package gfx
 
 import (
 	"github.com/veandco/go-sdl2/sdl"
@@ -59,3 +59,52 @@ func (q *eventQueue) IsEmpty() bool {
 
 // EventQueue is the global instance of the event queue.
 var EventQueue = newEventQueue()
+
+func (pg *PepperGraphics) runEventLoop() {
+	defer pg.wg.Done()
+	for !ShouldQuit {
+		event := sdl.PollEvent()
+		if event != nil {
+			switch e := event.(type) {
+			case *sdl.QuitEvent:
+				EventQueue.Enqueue(Event{Type: EventTypeQuit})
+				ShouldQuit = true // Signal VM to quit
+			case *sdl.MouseMotionEvent:
+				EventQueue.Enqueue(Event{
+					Type: EventTypeMouseMotion,
+					X:    int(e.X),
+					Y:    int(e.Y),
+				})
+			case *sdl.MouseButtonEvent:
+				var eventType EventType
+				if e.State == sdl.PRESSED {
+					eventType = EventTypeMouseButtonDown
+				} else {
+					eventType = EventTypeMouseButtonUp
+				}
+				EventQueue.Enqueue(Event{
+					Type:   eventType,
+					X:      int(e.X),
+					Y:      int(e.Y),
+					Button: e.Button,
+				})
+			case *sdl.KeyboardEvent:
+				var eventType EventType
+				if e.State == sdl.PRESSED {
+					eventType = EventTypeKeyDown
+				} else {
+					eventType = EventTypeKeyUp
+				}
+				EventQueue.Enqueue(Event{
+					Type:    eventType,
+					Key:     e.Keysym.Sym,
+					KeyName: sdl.GetKeyName(e.Keysym.Sym),
+				})
+			}
+		}
+		// Small delay to prevent busy-waiting
+	}
+	pg.Surface.Finish()
+	pg.Window.Destroy()
+	sdl.Quit()
+}

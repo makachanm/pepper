@@ -1,6 +1,6 @@
 Language Level Support
 - Rich Blending Mode
-- Rich Masking Feature
+- Rich Masking Feature (V)
 - SVG Support
 - Sound Support
 
