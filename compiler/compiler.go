@@ -246,7 +246,6 @@ func (c *Compiler) compileExpr(expr parser.Expression) {
 
 func (c *Compiler) compileBlockExpression(node *parser.BlockExpression) {
 	if len(node.Statements) == 0 {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil}) // Nil for empty block
 		return
 	}
 	last := len(node.Statements) - 1
@@ -496,7 +495,7 @@ func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 
 	c.compileStmt(node.Body, true)
 	if len(node.Body.Statements) == 0 || !isReturnStatement(node.Body.Statements[len(node.Body.Statements)-1]) {
-		c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
+		//c.emit(runtime.OpPush, runtime.VMDataObject{Type: runtime.NIL, Value: nil})
 		c.emit(runtime.OpReturn)
 	}
 
