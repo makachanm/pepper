@@ -106,5 +106,6 @@ func (pg *PepperGraphics) runEventLoop() {
 	}
 	pg.Surface.Finish()
 	pg.Window.Destroy()
+	sdl.CloseAudio()
 	sdl.Quit()
 }

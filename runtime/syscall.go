@@ -22,6 +22,8 @@ func doSyscall(v *VM, code int64) {
 		doSyscallJson(v, code)
 	case code >= 600 && code < 700:
 		doSyscallTime(v, code)
+	case code >= 700 && code < 800:
+		doSyscallAudio(v, code)
 	default:
 		panic("Unknown or unimplemented syscall code")
 	}

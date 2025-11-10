@@ -88,6 +88,7 @@ func main() {
 		vm := runtime.NewVM(instrs, &wg)
 		vm.Run(debug, verboseDebug)
 		wg.Wait()
+		runtime.Audio.Close()
 		return
 	}
 
@@ -127,4 +128,5 @@ func main() {
 	}
 
 	wg.Wait()
+	runtime.Audio.Close()
 }

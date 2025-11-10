@@ -83,7 +83,7 @@ func DefineStandardFunctions() map[string][]runtime.VMInstr {
 
 		"load_sprite":         {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(326)}}},
 		"create_sprite":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(327)}}},
-		"destroy_sprite":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(328)}}},
+		"free_sprite":         {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(328)}}},
 		"draw_sprite":         {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(329)}}},
 		"set_sprite_rotation": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(330)}}},
 		"set_sprite_scale":    {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(331)}}},
@@ -105,5 +105,18 @@ func DefineStandardFunctions() map[string][]runtime.VMInstr {
 		"hour":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(605)}}},
 		"minute": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(606)}}},
 		"second": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(607)}}},
+
+		// Audio
+		"load_sound":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(700)}}},
+		"play_sound":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(701)}}},
+		"stop_sound":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(702)}}},
+		"free_sound":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(703)}}},
+		"load_music":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(704)}}},
+		"play_music":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(705)}}},
+		"stop_music":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(706)}}},
+		"set_sfx_volume":   {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(707)}}},
+		"set_music_volume": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(708)}}},
+		"pause_sound":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(709)}}},
+		"resume_sound":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(710)}}},
 	}
 }

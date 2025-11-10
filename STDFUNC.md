@@ -479,10 +479,10 @@ dim sprite_id = load_sprite[`player.png`]
 dim sprite_id = create_sprite[64 64]
 ```
 
-#### destroy_sprite
-`destroy_sprite` 함수는 스프라이트 ID를 인자로 받아 해당 스프라이트를 메모리에서 해제합니다.
+#### free_sprite
+`free_sprite` 함수는 스프라이트 ID를 인자로 받아 해당 스프라이트를 메모리에서 해제합니다.
 ```
-destroy_sprite[sprite_id]
+free_sprite[sprite_id]
 ```
 
 #### draw_sprite
@@ -536,3 +536,73 @@ dim response = http_post[`https://example.com/api` `{ "key": "value" }`]
 ```
 dim data = http_get_json[`https://api.example.com/data`]
 ```
+
++
++### 오디오 (Audio)
++
++#### load_sound
++`load_sound` 함수는 WAV 오디오 파일 경로를 인자로 받아 사운드 효과를 로드하고, 해당 사운드의 ID를 반환합니다. 실패 시 -1을 반환합니다.
++```
++dim sound_id = load_sound[`sfx.wav`]
++```
++
++#### play_sound
++`play_sound` 함수는 사운드 ID와 반복 횟수를 인자로 받아 사운드를 재생합니다. 재생이 시작된 채널 번호를 반환하며, 실패 시 -1을 반환합니다. 반복 횟수에 -1을 주면 무한 반복됩니다.
++```
++dim channel = play_sound[sound_id 0] /* 1번 재생 */
++```
++
++#### stop_sound
++`stop_sound` 함수는 채널 번호를 인자로 받아 해당 채널에서 재생 중인 사운드를 즉시 중지합니다.
++```
++stop_sound[channel]
++```
++
++#### free_sound
++`free_sound` 함수는 사운드 ID를 인자로 받아 로드된 사운드를 메모리에서 해제합니다.
++```
++free_sound[sound_id]
++```
++
++#### load_music
++`load_music` 함수는 MP3, OGG, WAV 등의 음악 파일 경로를 인자로 받아 스트리밍할 음악을 로드합니다. 성공 시 `true`, 실패 시 `false`를 반환합니다.
++```
++load_music[`background.mp3`]
++```
++
++#### play_music
++`play_music` 함수는 반복 횟수를 인자로 받아 로드된 음악을 재생합니다. 반복 횟수에 -1을 주면 무한 반복됩니다.
++```
++play_music[-1] /* 무한 반복 재생 */
++```
++
++#### stop_music
++`stop_music` 함수는 현재 재생 중인 음악을 중지합니다.
++```
++stop_music[]
++```
++
++#### set_sfx_volume
++`set_sfx_volume` 함수는 채널 번호와 볼륨 값(0-128)을 인자로 받아 해당 채널의 사운드 효과 볼륨을 조절합니다.
++```
++set_sfx_volume[channel 64] /* 볼륨을 50%로 설정 */
++```
++
++#### set_music_volume
++`set_music_volume` 함수는 볼륨 값(0-128)을 인자로 받아 음악의 볼륨을 조절합니다.
++```
++set_music_volume /* 볼륨을 최대로 설정 */
++```
++
++#### pause_sound
++`pause_sound` 함수는 채널 번호를 인자로 받아 해당 채널의 사운드를 일시 정지합니다.
++```
++pause_sound[channel]
++```
++
++#### resume_sound
++`resume_sound` 함수는 채널 번호를 인자로 받아 일시 정지된 채널의 사운드를 다시 재생합니다.
++```
++resume_sound[channel]
++```
+

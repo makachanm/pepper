@@ -29,7 +29,8 @@ type VM struct {
 
 func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 	mem := NewVMMEMObjTable()
-	GfxNew(640, 480, wg) // Initialize graphics context
+	GfxNew(640, 480, wg)
+	AudioNew()
 
 	vm := &VM{
 		CallStack:    NewCallStack(),

@@ -25,8 +25,9 @@ func (pg *PepperGraphics) LoadSprite(filename string) (int, error) {
 		if err != nil {
 			panic(filename + " file cannot be loaded!")
 		}
+		defer svgRaw.Close()
 
-		svgImage, err := svg.ParseSvgFromReader(svgRaw, "SVG", 1)
+		svgImage, err := svg.ParseSvgFromReader(svgRaw, "svg-sprite", 1.0)
 		if err != nil {
 			panic(filename + " is not a valid SVG file!")
 		}
