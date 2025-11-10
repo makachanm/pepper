@@ -43,6 +43,17 @@ func NewVM(input []VMInstr, wg *sync.WaitGroup) *VM {
 	}
 	vm.curruntFunctionID = vm.internString("")
 	vm.initDispatchTable()
+
+	for i, instr := range input {
+		if instr.Op == OpDefFunc {
+			funcNameID := vm.internString(instr.Oprand1.Value.(string))
+			funcObj := VMFunctionObject{
+				JumpPc: i + 2,
+			}
+			vm.Memory.MakeFunc(funcNameID)
+			vm.Memory.SetFunc(funcNameID, funcObj, vm)
+		}
+	}
 	return vm
 }
 
@@ -55,7 +66,9 @@ func (v *VM) initDispatchTable() {
 	v.dispatchTable[OpLoadGlobal] = handleLoadGlobal
 	v.dispatchTable[OpStoreLocal] = handleStoreLocal
 	v.dispatchTable[OpLoadLocal] = handleLoadLocal
-	v.dispatchTable[OpDefFunc] = handleDefFunc
+	v.dispatchTable[OpDefFunc] = func(v *VM) bool {
+		return true
+	}
 	v.dispatchTable[OpCall] = handleCall
 	v.dispatchTable[OpReturn] = handleReturn
 	v.dispatchTable[OpSyscall] = handleSyscall
@@ -88,15 +101,6 @@ func (v *VM) initDispatchTable() {
 	v.dispatchTable[OpIndex] = handleIndex
 	v.dispatchTable[OpMakePack] = handleMakePack
 	v.dispatchTable[OpSetIndex] = handleSetIndex
-
-	for i, h := range v.dispatchTable {
-		if h == nil {
-			opcode := i
-			v.dispatchTable[opcode] = func(v *VM) bool {
-				panic(fmt.Sprintf("Unsupported opcode: %d at PC: %d", opcode, v.PC))
-			}
-		}
-	}
 }
 
 func (v *VM) internString(s string) int {
@@ -150,17 +154,17 @@ func handleStoreGlobal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.OperandStack.Pop()
 	globalScopeID := v.internString("")
-	if !v.Memory.HasObj(nameID, globalScopeID) {
+	if !v.Memory.HasObj(nameID, globalScopeID, v) {
 		v.Memory.MakeObj(nameID, globalScopeID)
 	}
-	v.Memory.SetObj(nameID, val, globalScopeID)
+	v.Memory.SetObj(nameID, val, globalScopeID, v)
 	return true
 }
 
 func handleLoadGlobal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	globalScopeID := v.internString("")
-	val := v.Memory.GetObj(nameID, globalScopeID)
+	val := v.Memory.GetObj(nameID, globalScopeID, v)
 	v.OperandStack.Push(*val)
 	return true
 }
@@ -168,28 +172,17 @@ func handleLoadGlobal(v *VM) bool {
 func handleStoreLocal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
 	val := v.OperandStack.Pop()
-	if !v.Memory.HasObj(nameID, v.curruntFunctionID) {
+	if !v.Memory.HasObj(nameID, v.curruntFunctionID, v) {
 		v.Memory.MakeObj(nameID, v.curruntFunctionID)
 	}
-	v.Memory.SetObj(nameID, val, v.curruntFunctionID)
+	v.Memory.SetObj(nameID, val, v.curruntFunctionID, v)
 	return true
 }
 
 func handleLoadLocal(v *VM) bool {
 	nameID := v.internString(v.OperandStack.Pop().Value.(string))
-	val := v.Memory.GetObj(nameID, v.curruntFunctionID)
+	val := v.Memory.GetObj(nameID, v.curruntFunctionID, v)
 	v.OperandStack.Push(*val)
-	return true
-}
-
-func handleDefFunc(v *VM) bool {
-	instr := v.Program[v.PC]
-	funcNameID := v.internString(instr.Oprand1.Value.(string))
-	funcObj := VMFunctionObject{
-		JumpPc: v.PC + 2,
-	}
-	v.Memory.MakeFunc(funcNameID)
-	v.Memory.SetFunc(funcNameID, funcObj)
 	return true
 }
 
@@ -206,7 +199,7 @@ func handleCall(v *VM) bool {
 		panic("Cannot call a non-function")
 	}
 
-	function := v.Memory.GetFunc(funcNameID)
+	function := v.Memory.GetFunc(funcNameID, v)
 
 	v.CallStack.Push(CallStackObject{PC: v.PC, NameID: v.curruntFunctionID})
 	v.curruntFunctionID = funcNameID

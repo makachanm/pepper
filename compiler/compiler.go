@@ -86,6 +86,7 @@ type Compiler struct {
 	instructions         []runtime.VMInstr
 	loopContexts         []*LoopContext
 	standardFunctionMaps map[string][]runtime.VMInstr
+	usedFunctions        map[string]bool
 	symbolTable          *SymbolTable
 }
 
@@ -94,6 +95,7 @@ func NewCompiler() *Compiler {
 	return &Compiler{
 		loopContexts:         make([]*LoopContext, 0),
 		standardFunctionMaps: make(map[string][]runtime.VMInstr),
+		usedFunctions:        make(map[string]bool),
 		symbolTable:          symbolTable,
 	}
 }
@@ -106,23 +108,25 @@ func (c *Compiler) leaveScope() {
 	c.symbolTable = c.symbolTable.Outer
 }
 
-func (c *Compiler) Compile(program *parser.Program, excludestd bool) []runtime.VMInstr {
-	if !excludestd {
-		c.standardFunctionMaps = stdfunc.DefineStandardFunctions()
-		for name := range c.standardFunctionMaps {
-			c.symbolTable.DefineFunc(name)
-		}
-		for name, instrs := range c.standardFunctionMaps {
-			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpDefFunc, Oprand1: runtime.VMDataObject{Type: runtime.STRING, Value: name}})
-			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpJmp, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(len(c.instructions)) + 3}})
-			c.instructions = append(c.instructions, instrs...)
-			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpReturn})
-		}
+func (c *Compiler) Compile(program *parser.Program) []runtime.VMInstr {
+	c.standardFunctionMaps = stdfunc.DefineStandardFunctions()
+	for stdfuncName := range c.standardFunctionMaps {
+		c.symbolTable.DefineFunc(stdfuncName)
 	}
 
 	for _, stmt := range program.Statements {
 		c.compileStmt(stmt, false)
 	}
+
+	for stdfuncName, stdInstrs := range c.standardFunctionMaps {
+		if c.usedFunctions[stdfuncName] {
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpDefFunc, Oprand1: runtime.VMDataObject{Type: runtime.STRING, Value: stdfuncName}})
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpJmp, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(len(c.instructions)) + 3}})
+			c.instructions = append(c.instructions, stdInstrs...)
+			c.instructions = append(c.instructions, runtime.VMInstr{Op: runtime.OpReturn})
+		}
+	}
+
 	return c.instructions
 }
 
@@ -501,6 +505,7 @@ func (c *Compiler) compileFunctionLiteral(node *parser.FunctionLiteral) {
 }
 
 func (c *Compiler) compileCallExpression(node *parser.CallExpression) {
+	c.usedFunctions[node.Function.(*parser.Identifier).Value] = true
 	for _, arg := range node.Arguments {
 		c.compileExpr(arg)
 	}

@@ -127,25 +127,25 @@ func (v *VMMEMObjectTable) DeallocateObj(key VMDataObjKey) {
 	delete(v.DataTable, key)
 }
 
-func (v *VMMEMObjectTable) GetObj(nameID int, scopeKeyID int) *VMDataObject {
+func (v *VMMEMObjectTable) GetObj(nameID int, scopeKeyID int, vm *VM) *VMDataObject {
 	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	idx, ok := v.DataTable[key]
 	if !ok {
-		panic("VMDataObject not found")
+		panic("VMDataObject not found: " + vm.stringTable[nameID])
 	}
 	return &v.DataMemory[idx]
 }
 
-func (v *VMMEMObjectTable) SetObj(nameID int, data VMDataObject, scopeKeyID int) {
+func (v *VMMEMObjectTable) SetObj(nameID int, data VMDataObject, scopeKeyID int, vm *VM) {
 	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	idx, ok := v.DataTable[key]
 	if !ok {
-		panic("VMDataObject not found")
+		panic("VMDataObject not found: " + vm.stringTable[nameID])
 	}
 	v.DataMemory[idx] = data
 }
 
-func (v *VMMEMObjectTable) HasObj(nameID int, scopeKeyID int) bool {
+func (v *VMMEMObjectTable) HasObj(nameID int, scopeKeyID int, vm *VM) bool {
 	key := VMDataObjKey{Name: nameID, ScopeKey: scopeKeyID}
 	_, ok := v.DataTable[key]
 	return ok
@@ -157,18 +157,18 @@ func (v *VMMEMObjectTable) MakeFunc(nameID int) {
 	v.currunt_free_fm_pointer++
 }
 
-func (v *VMMEMObjectTable) GetFunc(nameID int) *VMFunctionObject {
+func (v *VMMEMObjectTable) GetFunc(nameID int, vm *VM) *VMFunctionObject {
 	idx, ok := v.FunctionTable[nameID]
 	if !ok || idx >= len(v.FunctionMemory) {
-		panic("VMFunctionObject not found")
+		panic("VMFunctionObject not found: " + vm.stringTable[nameID])
 	}
 	return &v.FunctionMemory[idx]
 }
 
-func (v *VMMEMObjectTable) SetFunc(nameID int, fn VMFunctionObject) {
+func (v *VMMEMObjectTable) SetFunc(nameID int, fn VMFunctionObject, vm *VM) {
 	idx, ok := v.FunctionTable[nameID]
 	if !ok || idx >= len(v.FunctionMemory) {
-		panic("VMFunctionObject not found")
+		panic("VMFunctionObject not found: " + vm.stringTable[nameID])
 	}
 	v.FunctionMemory[idx] = fn
 }

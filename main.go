@@ -101,7 +101,7 @@ func main() {
 	p := parser.New(l)
 
 	program := p.ParseProgram()
-	comp := compiler.NewCompiler().Compile(program, false)
+	comp := compiler.NewCompiler().Compile(program)
 
 	if dump != "" {
 		encoded, err := utils.EncodeBytecode(comp)

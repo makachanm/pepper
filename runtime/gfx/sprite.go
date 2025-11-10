@@ -21,12 +21,12 @@ type Sprite struct {
 
 func (pg *PepperGraphics) LoadSprite(filename string) (int, error) {
 	if len(filename) >= 4 && filename[len(filename)-4:] == ".svg" {
-		svgRaw, err := os.ReadFile(filename)
+		svgRaw, err := os.Open(filename)
 		if err != nil {
 			panic(filename + " file cannot be loaded!")
 		}
 
-		svgImage, err := svg.ParseSvg(string(svgRaw), "SVG", 1)
+		svgImage, err := svg.ParseSvgFromReader(svgRaw, "SVG", 1)
 		if err != nil {
 			panic(filename + " is not a valid SVG file!")
 		}
@@ -129,42 +129,19 @@ func (pg *PepperGraphics) DrawSprite(id, x, y int) {
 			}
 		}()
 
-		isPathClosded := false
-		pg.Surface.NewPath()
 		for instr := range instructions {
 			switch instr.Kind {
 			case svg.MoveInstruction:
-				if isPathClosded {
-					pg.Surface.NewPath()
-					isPathClosded = false
-				}
 				pg.Surface.MoveTo(instr.M[0], instr.M[1])
 			case svg.LineInstruction:
-				if isPathClosded {
-					pg.Surface.NewPath()
-					isPathClosded = false
-				}
 				pg.Surface.LineTo(instr.M[0], instr.M[1])
 			case svg.CurveInstruction:
-				if isPathClosded {
-					pg.Surface.NewPath()
-					isPathClosded = false
-				}
 				pg.Surface.CurveTo(instr.CurvePoints.C1[0], instr.CurvePoints.C1[1], instr.CurvePoints.C2[0], instr.CurvePoints.C2[1], instr.CurvePoints.T[0], instr.CurvePoints.T[1])
 			case svg.CircleInstruction:
-				if isPathClosded {
-					pg.Surface.NewPath()
-					isPathClosded = false
-				}
 				pg.Surface.Arc(instr.M[0], instr.M[1], *instr.Radius, 0, 2*3.141592)
 			case svg.CloseInstruction:
 				pg.Surface.ClosePath()
-				isPathClosded = true
 			case svg.PaintInstruction:
-				if isPathClosded {
-					pg.Surface.NewPath()
-					isPathClosded = false
-				}
 				if instr.Fill != nil {
 					r, g, b, a := hexToRGBA(*instr.Fill)
 					pg.Surface.SetSourceRGBA(r, g, b, a)
