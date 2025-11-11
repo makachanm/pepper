@@ -95,7 +95,8 @@ func main() {
 	filePath := flag.Arg(0)
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		panic(err)
+		Prompt()
+		return
 	}
 
 	l := lexer.New(string(data))
