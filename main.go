@@ -16,7 +16,7 @@ import (
 	_ "net/http/pprof"
 )
 
-const version = "1.0.0"
+const version = "1.0.1"
 
 func main() {
 	var debug bool
