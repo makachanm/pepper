@@ -1,8 +1,7 @@
 Language Level Support
-- Rich Blending Mode
 - Rich Masking Feature (V)
-- SVG Support (V)
-- Sound Support
+- SVG Support (V, experimental)
+- Sound Support (V)
 
 Library Level Support
 - Graphing Library
