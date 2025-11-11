@@ -211,7 +211,7 @@ func (obj *VMDataObject) CastTo(d_type ValueType) VMDataObject {
 		case REAL:
 			return makeIntValueObj(int64(obj.Value.(float64)))
 		case STRING:
-			val, err := strconv.ParseInt(obj.Value.(string), 10, 64)
+			val, err := strconv.ParseInt(strings.TrimSpace(obj.Value.(string)), 10, 64)
 			if err != nil {
 				panic("Error Occured in Converting Object - " + err.Error())
 			}
@@ -226,7 +226,7 @@ func (obj *VMDataObject) CastTo(d_type ValueType) VMDataObject {
 		case INTGER:
 			return makeRealValueObj(float64(obj.Value.(int64)))
 		case STRING:
-			val, err := strconv.ParseFloat(obj.Value.(string), 64)
+			val, err := strconv.ParseFloat(strings.TrimSpace(obj.Value.(string)), 64)
 			if err != nil {
 				panic("Error Occured in Converting Object - " + err.Error())
 			}
