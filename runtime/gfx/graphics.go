@@ -7,8 +7,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-var ShouldQuit bool = false
-
 type PepperGraphics struct {
 	Width        int
 	Height       int

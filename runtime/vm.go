@@ -3,6 +3,7 @@ package runtime
 import (
 	"fmt"
 	"math/rand"
+	"pepper/runtime/state"
 	"sync"
 	"time"
 )
@@ -124,7 +125,7 @@ func (v *VM) Run(debugmode bool, verboseDebug bool) {
 	}()
 
 	for v.PC < len(v.Program) {
-		if ShouldQuit {
+		if state.ShouldQuit {
 			return
 		}
 		instr := v.Program[v.PC]
@@ -436,7 +437,7 @@ func handleCstStr(v *VM) bool {
 }
 
 func handleHlt(v *VM) bool {
-	ShouldQuit = true
+	state.ShouldQuit = true
 	v.PC = len(v.Program) // Stop the loop
 	return false
 }

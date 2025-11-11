@@ -1,6 +1,8 @@
 package gfx
 
 import (
+	"pepper/runtime/state"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -62,13 +64,13 @@ var EventQueue = newEventQueue()
 
 func (pg *PepperGraphics) runEventLoop() {
 	defer pg.wg.Done()
-	for !ShouldQuit {
+	for !state.ShouldQuit {
 		event := sdl.PollEvent()
 		if event != nil {
 			switch e := event.(type) {
 			case *sdl.QuitEvent:
 				EventQueue.Enqueue(Event{Type: EventTypeQuit})
-				ShouldQuit = true // Signal VM to quit
+				state.ShouldQuit = true // Signal VM to quit
 			case *sdl.MouseMotionEvent:
 				EventQueue.Enqueue(Event{
 					Type: EventTypeMouseMotion,
