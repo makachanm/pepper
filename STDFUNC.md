@@ -61,6 +61,48 @@ dim content = read_file[`path/to/file.txt`]
 write_file[`path/to/file.txt` `hello world`]
 ```
 
+#### file_exists
+`file_exists` 함수는 파일 또는 디렉토리의 존재 여부를 불리언(boolean) 값으로 반환합니다.
+```
+dim exists = file_exists[`path/to/file.txt`]
+```
+
+#### delete_file
+`delete_file` 함수는 파일을 삭제합니다. 성공 시 `true`를, 실패 시 `false`를 반환합니다.
+```
+delete_file[`path/to/file.txt`]
+```
+
+#### rename_file
+`rename_file` 함수는 파일의 이름을 변경하거나 파일을 이동합니다. 성공 시 `true`를, 실패 시 `false`를 반환합니다.
+```
+rename_file[`path/to/old_name.txt` `path/to/new_name.txt`]
+```
+
+#### list_dir
+`list_dir` 함수는 디렉토리 경로를 인자로 받아 디렉토리 내의 파일 및 디렉토리 이름의 팩(pack)을 반환합니다.
+```
+dim files = list_dir[`path/to/dir`]
+```
+
+#### create_dir
+`create_dir` 함수는 디렉토리를 생성합니다. 성공 시 `true`를, 실패 시 `false`를 반환합니다.
+```
+create_dir[`path/to/new_dir`]
+```
+
+#### is_dir
+`is_dir` 함수는 주어진 경로가 디렉토리인지 여부를 불리언(boolean) 값으로 반환합니다.
+```
+dim is_directory = is_dir[`path/to/dir`]
+```
+
+#### is_file
+`is_file` 함수는 주어진 경로가 파일인지 여부를 불리언(boolean) 값으로 반환합니다.
+```
+dim is_regular_file = is_file[`path/to/file.txt`]
+```
+
 ### 수학 (Math)
 
 #### sin

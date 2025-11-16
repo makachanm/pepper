@@ -16,6 +16,13 @@ func DefineStandardFunctions() map[string][]runtime.VMInstr {
 		"readln":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(2)}}},
 		"read_file":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(3)}}},
 		"write_file": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(4)}}},
+		"file_exists": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(5)}}},
+		"delete_file": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(6)}}},
+		"rename_file": {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(7)}}},
+		"list_dir":    {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(8)}}},
+		"create_dir":  {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(9)}}},
+		"is_dir":      {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(10)}}},
+		"is_file":     {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(11)}}},
 
 		// Math
 		"sin":       {runtime.VMInstr{Op: runtime.OpSyscall, Oprand1: runtime.VMDataObject{Type: runtime.INTGER, Value: int64(100)}}},
