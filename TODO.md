@@ -4,8 +4,8 @@ Language Level Support
 - Sound Support (V)
 
 Library Level Support
-- Graphing Library
-- GUI Library
+- Graphing Library (V, Partital)
+- GUI Library (V, Partital)
 
 External Level Support
 - LSP
